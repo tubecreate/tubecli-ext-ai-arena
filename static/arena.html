@@ -621,32 +621,14 @@
     .chess-cell.light { background: #16203a; }
     .chess-cell.dark  { background: #0c1326; }
 
-    /* Last move highlight squares */
+    /* Last move trail squares */
     .chess-cell.last-from {
-      background: rgba(6, 182, 212, 0.13) !important;
-      outline: 2px dashed rgba(6, 182, 212, 0.65);
-      outline-offset: -2px;
+      background: rgba(6, 182, 212, 0.12) !important;
+      box-shadow: inset 0 0 0 2px rgba(6, 182, 212, 0.35);
     }
     .chess-cell.last-to {
       background: rgba(6, 182, 212, 0.18) !important;
-    }
-    /* Corner-bracket reticle on destination square (static, no animation) */
-    .chess-cell.last-to::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background:
-        /* top-left H */  linear-gradient(to right, rgba(6,182,212,.9) 2px, transparent 2px) 0    0    / 30% 2px no-repeat,
-        /* top-left V */  linear-gradient(to bottom,rgba(6,182,212,.9) 2px, transparent 2px) 0    0    / 2px 30% no-repeat,
-        /* top-right H */ linear-gradient(to left,  rgba(6,182,212,.9) 2px, transparent 2px) 100% 0    / 30% 2px no-repeat,
-        /* top-right V */ linear-gradient(to bottom,rgba(6,182,212,.9) 2px, transparent 2px) 100% 0    / 2px 30% no-repeat,
-        /* btm-left H */  linear-gradient(to right, rgba(6,182,212,.9) 2px, transparent 2px) 0    100% / 30% 2px no-repeat,
-        /* btm-left V */  linear-gradient(to top,   rgba(6,182,212,.9) 2px, transparent 2px) 0    100% / 2px 30% no-repeat,
-        /* btm-right H */ linear-gradient(to left,  rgba(6,182,212,.9) 2px, transparent 2px) 100% 100% / 30% 2px no-repeat,
-        /* btm-right V */ linear-gradient(to top,   rgba(6,182,212,.9) 2px, transparent 2px) 100% 100% / 2px 30% no-repeat,
-        /* center dot */  radial-gradient(circle at 50% 50%, rgba(6,182,212,.5) 0%, rgba(6,182,212,.12) 18%, transparent 35%);
-      pointer-events: none;
-      z-index: 1;
+      box-shadow: inset 0 0 0 2px rgba(6, 182, 212, 0.6);
     }
 
     .chess-cell .piece {
@@ -654,7 +636,7 @@
       line-height: 1;
       position: relative;
       z-index: 2;
-      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
     /* White pieces = bright neon white; black pieces = neon cyan */
@@ -667,18 +649,14 @@
       filter: drop-shadow(0 0 6px rgba(34, 211, 238, 0.75));
     }
 
-    /* just-moved: static highlight on piece, no animation */
+    /* Piece-landed animation */
     .chess-cell .piece.just-moved {
-      filter: drop-shadow(0 0 8px rgba(6, 182, 212, 0.9)) drop-shadow(0 0 3px rgba(6,182,212,0.6));
+      animation: piece-land 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
-
-    /* SVG move arrow overlay */
-    .chess-move-arrow {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      z-index: 10;
-      overflow: visible;
+    @keyframes piece-land {
+      0%   { transform: scale(1.55); filter: drop-shadow(0 0 14px var(--cyan)); }
+      60%  { transform: scale(0.92); }
+      100% { transform: scale(1); }
     }
 
     /* Move effect overlays (orb + beam) like the reference shots */
@@ -1173,9 +1151,9 @@
               <div style="display: flex; flex-direction: column; gap: 6px;">
                 <label style="font-size: 12px; color: var(--text-secondary); font-weight: 600;">CHỌN GAME</label>
                 <select id="online-game" style="width: 100%;">
+                  <option value="chess" selected>♟️ Chess (Cờ vua)</option>
                   <option value="snake">🐍 Snake Arena</option>
                   <option value="tetris">🧱 Tetris Battle</option>
-                  <option value="chess">♟️ Chess (Cờ vua)</option>
                 </select>
               </div>
 
@@ -1231,9 +1209,9 @@
               <div class="setup-title" style="justify-content: space-between;">
                 <span>🏆 ELO Leaderboard (Hub)</span>
                 <select id="online-leaderboard-game" onchange="loadOnlineLeaderboard()" style="padding: 4px 8px; font-size: 11px; background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border); border-radius: 6px; cursor: pointer;">
+                  <option value="chess" selected>♟️ Chess (Cờ vua)</option>
                   <option value="snake">🐍 Snake Arena</option>
                   <option value="tetris">🧱 Tetris Battle</option>
-                  <option value="chess">♟️ Chess (Cờ vua)</option>
                 </select>
               </div>
               <div style="overflow-x: auto; max-height: 250px; margin-top: 10px;">
@@ -1256,7 +1234,7 @@
             </div>
 
             <div class="setup-section">
-              <div class="setup-title">📜 Lịch sử đấu Hub</div>
+              <div class="setup-title">📜 Lịch sử đấu Hub (Hôm nay)</div>
               <div style="overflow-y: auto; max-height: 250px; margin-top: 10px; display: flex; flex-direction: column; gap: 8px;" id="online-history-list">
                 <div style="text-align: center; color: var(--text-muted); padding: 15px; font-size: 12px;">Chưa có lịch sử đấu trên Hub.</div>
               </div>
@@ -2571,67 +2549,51 @@
 
     function playChessMoveFx(grid, fromSq, toSq) {
       const from = _squareToRC(fromSq);
-      const to   = _squareToRC(toSq);
+      const to = _squareToRC(toSq);
 
-      // Remove any previous arrow
-      const old = grid.querySelector('.chess-move-arrow');
-      if (old) old.remove();
+      const fromCell = grid.querySelector(`[data-sq="${fromSq}"]`);
+      const toCell = grid.querySelector(`[data-sq="${toSq}"]`);
 
-      const size = grid.clientWidth || grid.offsetWidth || 320;
-      const cell = size / 8;
+      // Orb pulsing on the origin square.
+      if (fromCell) {
+        const fx = document.createElement('div');
+        fx.className = 'move-fx';
+        fx.innerHTML = '<div class="orb"></div>';
+        fromCell.appendChild(fx);
+        setTimeout(() => fx.remove(), 1300);
+      }
 
-      // Center-points of each square (in SVG coords)
-      const x1 = (from.file + 0.5) * cell;
-      const y1 = (from.row  + 0.5) * cell;
-      const x2 = (to.file   + 0.5) * cell;
-      const y2 = (to.row    + 0.5) * cell;
+      // Selection reticle on the destination square.
+      if (toCell) {
+        const ret = document.createElement('div');
+        ret.className = 'move-reticle';
+        ret.style.position = 'absolute';
+        ret.style.inset = '8%';
+        toCell.appendChild(ret);
+        setTimeout(() => ret.remove(), 1400);
+      }
 
-      const dx = x2 - x1, dy = y2 - y1;
-      const len = Math.hypot(dx, dy);
-      if (len < 1) return;
+      // Energy beam linking the two squares.
+      const size = grid.clientWidth || grid.offsetWidth;
+      if (size) {
+        const cell = size / 8;
+        const x1 = (from.file + 0.5) * cell;
+        const y1 = (from.row + 0.5) * cell;
+        const x2 = (to.file + 0.5) * cell;
+        const y2 = (to.row + 0.5) * cell;
+        const dx = x2 - x1, dy = y2 - y1;
+        const len = Math.hypot(dx, dy);
+        const ang = Math.atan2(dy, dx);
 
-      // Shorten line so arrowhead doesn't cover the piece
-      const ux = dx / len, uy = dy / len;
-      const margin = cell * 0.32;  // how far from centre of dest
-      const ax1 = x1 + ux * cell * 0.25;  // start a bit past centre of origin
-      const ay1 = y1 + uy * cell * 0.25;
-      const ax2 = x2 - ux * margin;        // end before centre of dest
-      const ay2 = y2 - uy * margin;
-
-      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      svg.setAttribute('class', 'chess-move-arrow');
-      svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
-      svg.setAttribute('width', size);
-      svg.setAttribute('height', size);
-
-      // Arrow marker definition
-      const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
-      const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
-      marker.setAttribute('id', 'chess-arrow-head');
-      marker.setAttribute('markerWidth', '6');
-      marker.setAttribute('markerHeight', '6');
-      marker.setAttribute('refX', '5');
-      marker.setAttribute('refY', '3');
-      marker.setAttribute('orient', 'auto');
-      const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-      polygon.setAttribute('points', '0 0, 6 3, 0 6');
-      polygon.setAttribute('fill', 'rgba(6,182,212,0.85)');
-      marker.appendChild(polygon);
-      defs.appendChild(marker);
-      svg.appendChild(defs);
-
-      // Arrow shaft
-      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      line.setAttribute('x1', ax1); line.setAttribute('y1', ay1);
-      line.setAttribute('x2', ax2); line.setAttribute('y2', ay2);
-      line.setAttribute('stroke', 'rgba(6,182,212,0.75)');
-      line.setAttribute('stroke-width', cell * 0.14);
-      line.setAttribute('stroke-linecap', 'round');
-      line.setAttribute('marker-end', 'url(#chess-arrow-head)');
-      svg.appendChild(line);
-
-      grid.style.position = 'relative';
-      grid.appendChild(svg);
+        const beam = document.createElement('div');
+        beam.className = 'move-beam';
+        beam.style.left = x1 + 'px';
+        beam.style.top = y1 + 'px';
+        beam.style.width = len + 'px';
+        beam.style.transform = `rotate(${ang}rad)`;
+        grid.appendChild(beam);
+        setTimeout(() => beam.remove(), 750);
+      }
     }
 
     function renderSnakeBoard(container, state) {
@@ -3321,59 +3283,50 @@
       if (!hubUrl) return;
 
       try {
-        // Fetch both waiting and matched (live) rooms in parallel
-        const [waitingRes, matchedRes] = await Promise.all([
+        // Fetch both waiting rooms (can join) and matched rooms (actively playing)
+        const [waitRes, matchedRes] = await Promise.all([
           fetch(`${hubUrl}/api/v1/hub/rooms/list?status=waiting`),
-          fetch(`${hubUrl}/api/v1/hub/rooms/list?status=matched`),
+          fetch(`${hubUrl}/api/v1/hub/rooms/list?status=matched`)
         ]);
-        const waitingRooms = waitingRes.ok ? ((await waitingRes.json()).items || []) : [];
-        const matchedRooms = matchedRes.ok ? ((await matchedRes.json()).items || []) : [];
-        const rooms = [...waitingRooms, ...matchedRooms];
+        const waitData = waitRes.ok ? await waitRes.json() : { items: [] };
+        const matchedData = matchedRes.ok ? await matchedRes.json() : { items: [] };
+        const waitingRooms = waitData.items || [];
+        const matchedRooms = matchedData.items || [];
+        const allRooms = [...waitingRooms, ...matchedRooms];
 
-        if (rooms.length === 0) {
+        if (allRooms.length === 0) {
           tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 20px;">Không có phòng nào đang mở. Hãy tạo phòng mới ở bên trái!</td></tr>`;
           return;
         }
 
-        // Build agent name lookup map
+        // Build list of options for joining agents
         const agentOpts = ARENA_AGENTS.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
-        const agentNameMap = {};
-        ARENA_AGENTS.forEach(a => { agentNameMap[a.id] = a.name; });
 
-        tbody.innerHTML = rooms.map(r => {
+        tbody.innerHTML = allRooms.map(r => {
           const gameIcon = r.game_id === 'snake' ? '🐍' : (r.game_id === 'tetris' ? '🧱' : '♟️');
-          const isLive = r.status === 'matched';
-          const hostLabel = agentNameMap[r.player_1_id] || r.player_1_id.slice(0, 8);
-
-          if (isLive) {
-            // Live room — show LIVE badge + "Watch" button
+          const isMatched = r.status === 'matched';
+          if (isMatched) {
+            // Room already matched — show "Watch" button to join as spectator
             return `
-              <tr style="opacity:0.92;">
-                <td><span style="font-family:'JetBrains Mono',monospace;font-size:11px;">${r.room_id.slice(0, 8)}</span></td>
+              <tr style="opacity: 0.8;">
+                <td><span style="font-family: 'JetBrains Mono', monospace; font-size:11px;">${r.room_id.slice(0, 8)}</span></td>
                 <td>${gameIcon} ${r.game_id}</td>
+                <td><span style="font-weight:700;">${r.player_1_id.slice(0, 8)}</span></td>
                 <td>
-                  <span style="font-weight:700;">${hostLabel}</span>
-                  <span style="display:inline-flex;align-items:center;gap:4px;margin-left:8px;
-                    background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.5);
-                    border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700;color:#f87171;">
-                    <span style="width:6px;height:6px;background:#ef4444;border-radius:50%;
-                      animation:pulse-dot 1s infinite;display:inline-block;"></span>
-                    LIVE
-                  </span>
-                </td>
-                <td>
-                  <button class="btn-sm" style="background:rgba(239,68,68,0.2);border-color:rgba(239,68,68,0.6);color:#fca5a5;padding:4px 14px;"
-                    onclick="startOnlineStream('${r.match_id}')">📺 Xem live</button>
+                  <div style="display:flex; gap: 8px; align-items:center;">
+                    <span style="font-size:11px; color:var(--success); font-weight:600; padding: 3px 8px; background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); border-radius:5px;">⚔️ Đang đánh</span>
+                    ${r.match_id ? `<button class="btn-sm" style="background:rgba(99,102,241,0.2); border-color:var(--accent); color:var(--accent-light); padding: 4px 10px;" onclick="startOnlineStream('${r.match_id}')">👁️ Xem</button>` : ''}
+                  </div>
                 </td>
               </tr>
             `;
           } else {
-            // Waiting room — show challenge flow
+            // Waiting room — can challenge
             return `
               <tr>
-                <td><span style="font-family:'JetBrains Mono',monospace;font-size:11px;">${r.room_id.slice(0, 8)}</span></td>
+                <td><span style="font-family: 'JetBrains Mono', monospace; font-size:11px;">${r.room_id.slice(0, 8)}</span></td>
                 <td>${gameIcon} ${r.game_id}</td>
-                <td><span style="font-weight:700;">${hostLabel}</span></td>
+                <td><span style="font-weight:700;">${r.player_1_id.slice(0, 8)}</span></td>
                 <td>
                   <div style="display:flex; gap: 8px; align-items:center;">
                     <select id="join-agent-${r.room_id}" style="padding: 4px 8px; font-size:12px; background:var(--bg-secondary); color:var(--text-primary); border:1px solid var(--border); border-radius:6px;">
@@ -4020,27 +3973,44 @@
       try {
         const res = await fetch(`${hubUrl}/api/v1/hub/matches/list`);
         const data = await res.json();
-        const items = data.items || [];
+        const allItems = data.items || [];
+
+        // Filter: only today's matches, no errors (winner must exist and not be null), newest first
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        const todayStartSec = todayStart.getTime() / 1000;
+
+        const items = allItems
+          .filter(h => {
+            // Only today
+            if (h.timestamp < todayStartSec) return false;
+            // Must have a valid winner (not null, not empty)
+            if (!h.winner) return false;
+            return true;
+          })
+          .slice(0, 20); // max 20 items
+        // Already sorted DESC from server, so newest first
 
         if (items.length === 0) {
-          container.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 15px; font-size: 12px;">Chưa có lịch sử đấu trên Hub.</div>`;
+          container.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 15px; font-size: 12px;">Chưa có trận đấu hoàn thành hôm nay.</div>`;
           return;
         }
 
-        container.innerHTML = items.slice(-10).reverse().map(h => {
+        container.innerHTML = items.map(h => {
           const gameIcon = h.game_id === 'snake' ? '🐍' : (h.game_id === 'tetris' ? '🧱' : '♟️');
-          const dateStr = new Date(h.timestamp * 1000).toLocaleTimeString();
+          const dateStr = new Date(h.timestamp * 1000).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+          const winnerDisplay = h.winner === 'draw' ? '🤝 Hòa' : `🏆 ${h.winner}`;
           return `
             <div style="background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 8px; padding: 10px; font-size: 11px;">
-              <div style="display:flex; justify-content:space-between;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
                 <strong>${gameIcon} ${h.game_id}</strong>
                 <span style="color:var(--text-muted);">${dateStr}</span>
               </div>
-              <div style="margin-top:4px;">
-                <span>${h.player_1} vs ${h.player_2}</span>
+              <div style="margin-top:4px; color: var(--text-secondary);">
+                ${h.player_1} vs ${h.player_2}
               </div>
-              <div style="margin-top:4px; display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-weight:700; color:var(--accent-light);">Người thắng: ${h.winner}</span>
+              <div style="margin-top:6px; display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-weight:700; color:var(--accent-light);">${winnerDisplay}</span>
                 <button class="btn-sm" style="margin: 0; padding: 2px 8px; font-size: 10px; border-color: rgba(99,102,241,0.3); background: rgba(99,102,241,0.1); color: var(--accent-light); cursor: pointer;" onclick="playOnlineReplay('${h.match_id}', '${h.game_id}')">▶ Xem lại</button>
               </div>
             </div>
@@ -4050,6 +4020,7 @@
         container.innerHTML = `<div style="text-align: center; color: var(--danger); padding: 15px; font-size: 12px;">Lỗi tải lịch sử</div>`;
       }
     }
+
 
     function startOnlineStream(matchId, updateHash = true) {
       if (updateHash) {
