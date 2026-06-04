@@ -3316,40 +3316,76 @@
       if (!hubUrl) return;
 
       try {
-        const res = await fetch(`${hubUrl}/api/v1/hub/rooms/list?status=waiting`);
-        const data = await res.json();
-        const rooms = data.items || [];
+        // Fetch both waiting and matched (live) rooms in parallel
+        const [waitingRes, matchedRes] = await Promise.all([
+          fetch(`${hubUrl}/api/v1/hub/rooms/list?status=waiting`),
+          fetch(`${hubUrl}/api/v1/hub/rooms/list?status=matched`),
+        ]);
+        const waitingRooms = waitingRes.ok ? ((await waitingRes.json()).items || []) : [];
+        const matchedRooms = matchedRes.ok ? ((await matchedRes.json()).items || []) : [];
+        const rooms = [...waitingRooms, ...matchedRooms];
 
         if (rooms.length === 0) {
           tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 20px;">Không có phòng nào đang mở. Hãy tạo phòng mới ở bên trái!</td></tr>`;
           return;
         }
 
-        // Build list of options for joining agents
+        // Build agent name lookup map
         const agentOpts = ARENA_AGENTS.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+        const agentNameMap = {};
+        ARENA_AGENTS.forEach(a => { agentNameMap[a.id] = a.name; });
 
         tbody.innerHTML = rooms.map(r => {
           const gameIcon = r.game_id === 'snake' ? '🐍' : (r.game_id === 'tetris' ? '🧱' : '♟️');
-          return `
-            <tr>
-              <td><span style="font-family: 'JetBrains Mono', monospace; font-size:11px;">${r.room_id.slice(0, 8)}</span></td>
-              <td>${gameIcon} ${r.game_id}</td>
-              <td><span style="font-weight:700;">${r.player_1_id.slice(0, 8)}</span></td>
-              <td>
-                <div style="display:flex; gap: 8px; align-items:center;">
-                  <select id="join-agent-${r.room_id}" style="padding: 4px 8px; font-size:12px; background:var(--bg-secondary); color:var(--text-primary); border:1px solid var(--border); border-radius:6px;">
-                    ${agentOpts || '<option value="">Không có agent</option>'}
-                  </select>
-                  <button class="btn-sm" style="background:var(--accent-dark); border-color:var(--accent); color:white; padding: 4px 10px;" onclick="challengeOnlineRoom('${r.room_id}', '${r.game_id}', '${r.player_1_id}')">Khiêu chiến</button>
-                </div>
-              </td>
-            </tr>
-          `;
+          const isLive = r.status === 'matched';
+          const hostLabel = agentNameMap[r.player_1_id] || r.player_1_id.slice(0, 8);
+
+          if (isLive) {
+            // Live room — show LIVE badge + "Watch" button
+            return `
+              <tr style="opacity:0.92;">
+                <td><span style="font-family:'JetBrains Mono',monospace;font-size:11px;">${r.room_id.slice(0, 8)}</span></td>
+                <td>${gameIcon} ${r.game_id}</td>
+                <td>
+                  <span style="font-weight:700;">${hostLabel}</span>
+                  <span style="display:inline-flex;align-items:center;gap:4px;margin-left:8px;
+                    background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.5);
+                    border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700;color:#f87171;">
+                    <span style="width:6px;height:6px;background:#ef4444;border-radius:50%;
+                      animation:pulse-dot 1s infinite;display:inline-block;"></span>
+                    LIVE
+                  </span>
+                </td>
+                <td>
+                  <button class="btn-sm" style="background:rgba(239,68,68,0.2);border-color:rgba(239,68,68,0.6);color:#fca5a5;padding:4px 14px;"
+                    onclick="startOnlineStream('${r.match_id}')">📺 Xem live</button>
+                </td>
+              </tr>
+            `;
+          } else {
+            // Waiting room — show challenge flow
+            return `
+              <tr>
+                <td><span style="font-family:'JetBrains Mono',monospace;font-size:11px;">${r.room_id.slice(0, 8)}</span></td>
+                <td>${gameIcon} ${r.game_id}</td>
+                <td><span style="font-weight:700;">${hostLabel}</span></td>
+                <td>
+                  <div style="display:flex; gap: 8px; align-items:center;">
+                    <select id="join-agent-${r.room_id}" style="padding: 4px 8px; font-size:12px; background:var(--bg-secondary); color:var(--text-primary); border:1px solid var(--border); border-radius:6px;">
+                      ${agentOpts || '<option value="">Không có agent</option>'}
+                    </select>
+                    <button class="btn-sm" style="background:var(--accent-dark); border-color:var(--accent); color:white; padding: 4px 10px;" onclick="challengeOnlineRoom('${r.room_id}', '${r.game_id}', '${r.player_1_id}')">Khiêu chiến</button>
+                  </div>
+                </td>
+              </tr>
+            `;
+          }
         }).join('');
       } catch (e) {
         tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--danger); padding: 20px;">Lỗi tải phòng: ${e.message}</td></tr>`;
       }
     }
+
 
     async function registerOnlineAgent() {
       const agentId = document.getElementById('online-agent').value;
