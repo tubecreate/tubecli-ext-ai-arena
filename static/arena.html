@@ -1042,7 +1042,14 @@
       </div>
     </header>
 
+    <!-- ⚡ Floating Multi-Match Dashboard -->
+    <div id="multi-match-dashboard" style="display:none; position:fixed; bottom:80px; right:20px; z-index:9999; background:rgba(10,14,26,0.95); border:1px solid rgba(99,102,241,0.4); border-radius:12px; padding:12px 14px; min-width:200px; max-width:240px; box-shadow:0 8px 32px rgba(0,0,0,0.6); backdrop-filter:blur(12px);"></div>
+
+    <!-- 🔔 Turn toast notification -->
+    <div id="match-toast" style="position:fixed; bottom:20px; right:20px; z-index:10000; background:linear-gradient(135deg,rgba(34,197,94,0.92),rgba(16,163,74,0.92)); color:#fff; font-weight:700; font-size:13px; border-radius:10px; padding:10px 18px; box-shadow:0 4px 20px rgba(34,197,94,0.4); opacity:0; transform:translateY(20px); transition:opacity 0.3s, transform 0.3s; cursor:pointer;" onclick="this.style.opacity='0'"></div>
+
     <!-- Lobby Page -->
+
     <div id="page-lobby" class="page active">
       <div class="lobby-hero">
         <h1 class="lobby-title">⚔️ AI Arena ⚔️</h1>
@@ -1101,16 +1108,11 @@
             <div class="player-slot" style="background: rgba(0,0,0,0.3); border: 1px solid var(--border); padding: 16px;">
               <div style="display: flex; flex-direction: column; gap: 10px;">
                 <label style="font-size: 12px; color: var(--text-secondary); font-weight: 600;">HUB SERVER URL</label>
-                <input type="text" id="online-hub-url" value="https://tournament-hub.tubecreate.com" placeholder="https://..." style="width: 100%;">
-                
-                <label style="font-size: 12px; color: var(--text-secondary); font-weight: 600;">WEBHOOK MÁY LOCAL (ĐỂ NHẬN LƯỢT)</label>
-                <div style="display: flex; gap: 8px; align-items: center; width: 100%;">
-                  <input type="text" id="online-webhook-url" value="" placeholder="http://..." style="flex: 1; margin: 0;">
-                  <button class="nav-btn" id="btn-start-tunnel" onclick="autoStartCloudflareTunnel()" style="margin: 0; padding: 8px 12px; white-space: nowrap; font-size: 12px; height: 36px; display: flex; align-items: center; gap: 4px;">⚡ Cloudflare Tunnel</button>
+                <input type="text" id="online-hub-url" value="https://tournament-hub.tubecli.workers.dev" placeholder="https://..." style="width: 100%;">
+                <div style="background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); border-radius: 8px; padding: 10px; font-size: 11px; color: #86efac; line-height: 1.5;">
+                  ✅ <b>Không cần Webhook / Tunnel!</b><br>
+                  Kiến trúc mới: arena.html tự polling Hub để biết đến lượt, rồi gửi nước đi qua <code>submit-move</code>. Bạn chỉ cần kết nối internet bình thường.
                 </div>
-                <span style="font-size: 11px; color: var(--text-muted); line-height: 1.4;">
-                  💡 Hub Server sẽ gọi URL này (endpoint `/api/v1/arena/play-turn`) để lấy nước đi của Agent. Nhấn nút <b>Cloudflare Tunnel</b> để tự động tạo URL công khai bằng trycloudflare.com.
-                </span>
               </div>
             </div>
           </div>
@@ -1328,6 +1330,43 @@
             </div>
           </div>
 
+          <!-- ── REPLAY TOOLBAR (hidden by default, shown in replay mode) ── -->
+          <div id="replay-toolbar" style="display:none; background: rgba(0,0,0,0.4); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 10px 20px; gap: 10px; flex-direction: column;">
+            <!-- Timeline scrubber -->
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span id="replay-turn-label" style="font-size:11px; color:var(--text-muted); min-width:60px;">Lượt 0/0</span>
+              <input type="range" id="replay-scrubber" min="0" max="0" value="0"
+                style="flex:1; accent-color: var(--accent); cursor:pointer; height:4px;"
+                oninput="onReplayScrub(this.value)"
+                onchange="onReplayScrub(this.value)">
+              <span id="replay-time-label" style="font-size:11px; color:var(--text-muted); min-width:55px; text-align:right;">0.0s</span>
+            </div>
+            <!-- Controls row -->
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <button id="replay-btn-prev" onclick="replayStepBy(-1)" title="Lùi 1 lượt"
+                style="background:rgba(255,255,255,0.08); border:1px solid var(--border); color:var(--text-primary); border-radius:6px; padding:5px 10px; cursor:pointer; font-size:14px;">⏮</button>
+              <button id="replay-btn-play" onclick="toggleReplayPlay()" title="Play/Pause"
+                style="background: var(--accent); border:none; color:#fff; border-radius:6px; padding:5px 14px; cursor:pointer; font-size:14px; font-weight:700;">▶ Play</button>
+              <button id="replay-btn-next" onclick="replayStepBy(1)" title="Tiến 1 lượt"
+                style="background:rgba(255,255,255,0.08); border:1px solid var(--border); color:var(--text-primary); border-radius:6px; padding:5px 10px; cursor:pointer; font-size:14px;">⏭</button>
+              <select id="replay-speed" onchange="updateReplaySpeed()" title="Tốc độ phát"
+                style="background:rgba(0,0,0,0.4); border:1px solid var(--border); color:var(--text-primary); border-radius:6px; padding:5px 8px; cursor:pointer; font-size:12px;">
+                <option value="2000">0.5×</option>
+                <option value="1000">1×</option>
+                <option value="600" selected>1.5×</option>
+                <option value="400">2×</option>
+                <option value="200">5×</option>
+                <option value="80">Max</option>
+              </select>
+              <span style="font-size:11px; color:var(--text-muted); margin-left:6px;">Tốc độ</span>
+              <!-- Thinking time display -->
+              <div id="replay-thinking-badge" style="margin-left:auto; background:rgba(99,102,241,0.15); border:1px solid rgba(99,102,241,0.3); border-radius:6px; padding:4px 10px; font-size:11px; display:none;">
+                <span style="color:var(--text-muted);">🧠 Suy nghĩ:</span>
+                <span id="replay-thinking-time" style="color:var(--accent-light); font-weight:700; margin-left:4px;">—</span>
+              </div>
+            </div>
+          </div>
+
           <!-- Canvas Container -->
           <div class="board-container" style="padding: 24px; position: relative;">
             <div style="position: absolute; top: 12px; left: 12px; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: var(--danger); font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 4px 10px; border-radius: 4px; display: flex; align-items: center; gap: 6px; z-index: 10;">
@@ -1534,6 +1573,11 @@
         const gameId = params.game_id || 'chess';
         const mode = params.mode || 'stream';
         if (matchId) {
+          // ⚠️ Set the game dropdown BEFORE calling startOnlineStream
+          // so renderOnlineBoard picks the right game engine
+          const gameSelect = document.getElementById('online-game');
+          if (gameSelect && gameId) gameSelect.value = gameId;
+
           if (mode === 'replay') {
             playOnlineReplay(matchId, gameId, false);
           } else {
@@ -2971,11 +3015,271 @@
       }
     }
 
+    /**
+     * Resolve the effective API base URL for Hub calls.
+     * The new Cloudflare Worker hosts BOTH static assets AND the API.
+     * No redirect needed — call the workers.dev URL directly.
+     */
+    function resolveHubApiUrl(rawHubUrl) {
+      return (rawHubUrl || '').trim();
+    }
+
+    // ---- Submit-Move Architecture ----
+    // Instead of Hub calling a webhook, arena.html polls for its turn
+    // and submits moves directly to the Hub.
+
+    let onlineMovePollingInterval = null;
+    let onlineMyPlayerId = null;  // agent_id of our local player in current match
+    let onlineMyMatchId = null;
+    let onlineMyGame = null;
+
+    function startOnlineMovePolling(matchId, playerId, gameId) {
+      stopOnlineMovePolling();
+      onlineMyMatchId = matchId;
+      onlineMyPlayerId = playerId;
+      onlineMyGame = gameId;
+      console.log(`[Online] Start polling for turns: match=${matchId}, player=${playerId}`);
+      onlineMovePollingInterval = setInterval(() => pollForMyTurn(matchId, playerId), 1500);
+    }
+
+    function stopOnlineMovePolling() {
+      if (onlineMovePollingInterval) {
+        clearInterval(onlineMovePollingInterval);
+        onlineMovePollingInterval = null;
+      }
+    }
+
+    // ── Multi-Match Background Engine ────────────────────────────────────────
+    // Polls ALL active matches simultaneously, regardless of which UI is shown.
+    // Keys: "matchId:playerId" so same agent in different matches don't collide.
+    //
+    // Usage: globalMatchEngine.add(matchId, playerId, gameId)
+    //        globalMatchEngine.remove(matchId, playerId)
+    //        globalMatchEngine.removeMatch(matchId)
+    // ─────────────────────────────────────────────────────────────────────────
+    const globalMatchEngine = {
+      _slots: {},   // key: "matchId:playerId" → { matchId, playerId, gameId, intervalId, status }
+
+      add(matchId, playerId, gameId) {
+        const key = `${matchId}:${playerId}`;
+        if (this._slots[key]) return; // already tracking
+        console.log(`[Engine] +slot ${matchId.slice(-6)}:${playerId.slice(-6)} game=${gameId}`);
+        const slot = { matchId, playerId, gameId, status: 'waiting' };
+        slot.intervalId = setInterval(() => this._tick(key), 1500);
+        this._slots[key] = slot;
+        this._renderDashboard();
+      },
+
+      remove(matchId, playerId) {
+        const key = `${matchId}:${playerId}`;
+        if (this._slots[key]) {
+          clearInterval(this._slots[key].intervalId);
+          delete this._slots[key];
+          this._renderDashboard();
+        }
+      },
+
+      removeMatch(matchId) {
+        Object.keys(this._slots).forEach(k => {
+          if (k.startsWith(matchId + ':')) this.remove(...k.split(':').slice(0, 2));
+          // actually need full matchId — rebuild:
+        });
+        // Safer: iterate all slots
+        for (const [key, slot] of Object.entries(this._slots)) {
+          if (slot.matchId === matchId) {
+            clearInterval(slot.intervalId);
+            delete this._slots[key];
+          }
+        }
+        this._renderDashboard();
+      },
+
+      stopAll() {
+        Object.values(this._slots).forEach(s => clearInterval(s.intervalId));
+        this._slots = {};
+        this._renderDashboard();
+      },
+
+      async _tick(key) {
+        const slot = this._slots[key];
+        if (!slot) return;
+        const { matchId, playerId, gameId } = slot;
+        const hubUrl = resolveHubApiUrl(document.getElementById('online-hub-url')?.value?.trim() || '');
+        if (!hubUrl) return;
+        try {
+          const res = await fetch(`${hubUrl}/api/v1/hub/matches/${matchId}/pending-move?player_id=${encodeURIComponent(playerId)}`);
+          if (!res.ok) {
+            if (res.status === 404) { this.remove(matchId, playerId); return; }
+            return;
+          }
+          const data = await res.json();
+          if (data.status === 'your_turn') {
+            // Reset waiting timer on success
+            slot.waitingSince = null;
+            slot._triggerSent = false;
+            // Pause tick, compute & submit, resume
+            clearInterval(slot.intervalId);
+            slot.status = 'computing';
+            this._renderDashboard();
+            console.log(`%c[Engine] 🎯 TURN ${data.turn} → ${playerId.slice(-6)} in ${matchId.slice(-6)}`, 'color:#22c55e;font-weight:bold');
+            // Notify if not watching this match
+            this._notify(matchId, playerId, data.turn);
+            await computeAndSubmitMove(matchId, playerId, data.turn, data.state, data.prompt, gameId);
+            // Resume
+            if (this._slots[key]) {
+              slot.status = 'waiting';
+              slot.intervalId = setInterval(() => this._tick(key), 1500);
+              this._renderDashboard();
+            }
+          } else if (data.status === 'waiting') {
+            if (slot.status !== 'waiting') { slot.status = 'waiting'; this._renderDashboard(); }
+            // Auto-recovery: if waiting too long, trigger DO alarm manually
+            if (!slot.waitingSince) slot.waitingSince = Date.now();
+            const waitedMs = Date.now() - slot.waitingSince;
+            if (waitedMs > 8000 && !slot._triggerSent) {
+              slot._triggerSent = true;
+              console.warn(`[Engine] ⚠️ Waiting ${Math.round(waitedMs/1000)}s — kicking DO alarm for ${matchId.slice(-8)}`);
+              fetch(`${hubUrl}/api/v1/hub/matches/${matchId}/trigger-turn`, { method: 'POST' })
+                .then(r => r.json())
+                .then(r => {
+                  console.log('[Engine] trigger-turn response:', r);
+                  // Reset so it can retry after another 8s if needed
+                  setTimeout(() => { if (this._slots[key]) { this._slots[key]._triggerSent = false; this._slots[key].waitingSince = Date.now(); } }, 8000);
+                })
+                .catch(() => { if (this._slots[key]) this._slots[key]._triggerSent = false; });
+            }
+          } else if (slot.matchStatus !== data.status) {
+            slot.matchStatus = data.status;
+            if (data.status === 'finished') { this.remove(matchId, playerId); }
+          }
+        } catch(e) { /* network, ignore */ }
+      },
+
+
+      _notify(matchId, playerId, turn) {
+        const activeMatchId = onlineActiveMatchId;
+        if (matchId === activeMatchId) return; // user is already watching
+        // Flash dashboard badge
+        const badge = document.getElementById(`engine-badge-${matchId.slice(-6)}`);
+        if (badge) {
+          badge.style.animation = 'none';
+          badge.offsetHeight; // reflow
+          badge.style.animation = 'pulse-dot 0.4s 3';
+        }
+        // Show toast
+        _showMatchToast(matchId, playerId, turn);
+      },
+
+      _renderDashboard() {
+        const panel = document.getElementById('multi-match-dashboard');
+        if (!panel) return;
+        const slots = Object.values(this._slots);
+        if (slots.length === 0) { panel.style.display = 'none'; return; }
+        panel.style.display = '';
+        const hubUrl = resolveHubApiUrl(document.getElementById('online-hub-url')?.value?.trim() || '');
+        panel.innerHTML = `
+          <div style="font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">⚡ ${slots.length} trận đang chạy</div>
+          ${slots.map(s => {
+            const statusIcon = s.status === 'computing' ? '🧠' : '⏳';
+            const statusColor = s.status === 'computing' ? '#22c55e' : 'var(--text-muted)';
+            return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+              <span id="engine-badge-${s.matchId.slice(-6)}" style="font-size:14px;">${statusIcon}</span>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:11px;font-weight:700;color:${statusColor};">${s.matchId.slice(-8)}</div>
+                <div style="font-size:10px;color:var(--text-muted);">${s.gameId} · ${s.playerId.slice(-6)}</div>
+              </div>
+              <button onclick="globalMatchEngine._watchMatch('${s.matchId}','${s.gameId}')" style="font-size:10px;background:rgba(99,102,241,0.2);border:1px solid var(--accent);color:var(--accent-light);border-radius:4px;padding:2px 7px;cursor:pointer;">👁</button>
+            </div>`;
+          }).join('')}
+        `;
+      },
+
+      _watchMatch(matchId, gameId) {
+        const gameSelect = document.getElementById('online-game');
+        if (gameSelect && gameId) gameSelect.value = gameId;
+        startOnlineStream(matchId);
+      }
+    };
+
+    function _showMatchToast(matchId, playerId, turn) {
+      let toast = document.getElementById('match-toast');
+      if (!toast) return;
+      toast.innerText = `🎯 Đến lượt! Trận ${matchId.slice(-6)} · Lượt ${turn}`;
+      toast.style.opacity = '1';
+      toast.style.transform = 'translateY(0)';
+      clearTimeout(toast._hideTimer);
+      toast._hideTimer = setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(20px)';
+      }, 4000);
+    }
+
+    async function pollForMyTurn(matchId, playerId, gameId) {
+      // Legacy wrapper — delegate to globalMatchEngine
+      // (kept for backward compat with autoStartLocalPolling)
+      globalMatchEngine.add(matchId, playerId, gameId);
+    }
+
+    async function computeAndSubmitMove(matchId, playerId, turn, gameState, prompt, gameId) {
+      const hubUrl = resolveHubApiUrl(document.getElementById('online-hub-url').value.trim());
+      const agentId = playerId;
+
+      try {
+        // Call local tubecli to compute AI move
+        const localRes = await fetch(`/api/v1/arena/play-turn`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            agent_id: agentId,
+            game_id: gameId,
+            game_state: gameState,
+            prompt: prompt
+          })
+        });
+
+        let move = null;
+        if (localRes.ok) {
+          const result = await localRes.json();
+          move = result.move || null;
+          console.log(`[Poll] Local AI returned move:`, move);
+        } else {
+          const errTxt = await localRes.text();
+          console.error(`[Poll] Local AI error ${localRes.status}:`, errTxt.slice(0, 200));
+        }
+
+        if (!move) {
+          console.warn('[Online] Local AI did not return a move, submitting empty');
+          move = {};
+        }
+
+        // Submit move to Hub
+        const submitRes = await fetch(`${hubUrl}/api/v1/hub/matches/${matchId}/submit-move`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ player_id: playerId, move, turn })
+        });
+
+        if (submitRes.ok) {
+          console.log(`[Online] Move submitted for turn ${turn}:`, move);
+        } else {
+          const err = await submitRes.json();
+          console.warn('[Online] Submit move failed:', err);
+        }
+      } catch(e) {
+        console.error('[Online] computeAndSubmitMove error:', e.message);
+      } finally {
+        // Resume polling for next turn
+        if (onlineMyMatchId === matchId) {
+          startOnlineMovePolling(matchId, playerId, onlineMyGame);
+        }
+      }
+    }
+
     async function fetchOnlineRooms() {
       const tbody = document.getElementById('online-rooms-body');
       if (!tbody) return;
 
-      const hubUrl = document.getElementById('online-hub-url').value.trim();
+      const hubUrl = resolveHubApiUrl(document.getElementById('online-hub-url').value.trim());
       if (!hubUrl) return;
 
       try {
@@ -3021,36 +3325,12 @@
         return false;
       }
       
-      const hubUrl = document.getElementById('online-hub-url').value.trim();
-      let webhookUrl = document.getElementById('online-webhook-url').value.trim();
+      const hubUrl = resolveHubApiUrl(document.getElementById('online-hub-url').value.trim());
       const gameId = document.getElementById('online-game').value;
 
       if (!hubUrl) {
         alert("Vui lòng nhập Hub URL!");
         return false;
-      }
-
-      const isHubLocal = hubUrl.includes('localhost') || hubUrl.includes('127.0.0.1');
-      
-      if (!isHubLocal && (!webhookUrl || webhookUrl.includes('localhost') || webhookUrl.includes('127.0.0.1'))) {
-        const confirmTunnel = confirm("⚠️ Cảnh báo: Webhook URL của bạn chưa được cấu hình hoặc đang là địa chỉ cục bộ (localhost), trong khi bạn đang kết nối tới Hub từ xa.\n\nBạn có muốn hệ thống tự động kích hoạt Cloudflare Tunnel để tạo URL công khai (trycloudflare.com) thay thế không?");
-        if (confirmTunnel) {
-          await autoStartCloudflareTunnel();
-          webhookUrl = document.getElementById('online-webhook-url').value.trim();
-        }
-      }
-
-      if (!webhookUrl) {
-        alert("Vui lòng cấu hình Webhook URL công khai hoặc cục bộ hợp lệ!");
-        return false;
-      }
-
-      const isWebhookLocal = webhookUrl.includes('localhost') || webhookUrl.includes('127.0.0.1') || webhookUrl.includes('192.168.') || webhookUrl.includes('10.');
-      if (!isHubLocal && isWebhookLocal) {
-        const confirmLocal = confirm("⚠️ Cảnh báo: Bạn đang sử dụng Hub từ xa nhưng Webhook URL lại là địa chỉ cục bộ (localhost/local IP). Hub từ xa sẽ KHÔNG THỂ gửi yêu cầu nước đi đến máy của bạn được.\n\nĐể khắc phục, bạn cần:\n1. Chạy Hub ở máy local (ví dụ http://localhost:8000)\nhoặc 2. Sử dụng ngrok/cloudflare tunnel để tạo URL công khai cho Webhook của bạn.\n\nBạn có muốn tiếp tục đăng ký không?");
-        if (!confirmLocal) {
-          return false;
-        }
       }
 
       // Check model availability first
@@ -3095,13 +3375,14 @@
           body: JSON.stringify({
             agent_id: agentId,
             name: `${name} (${selectedModel})`,
-            owner_server_url: webhookUrl,
             game_id: gameId
+            // No owner_server_url — new submit-move architecture!
           })
         });
         const data = await res.json();
         if (res.ok) {
-          alert(`Đăng ký Agent "${name}" sử dụng model "${selectedModel}" thành công lên Hub!`);
+          onlineMyPlayerId = agentId;
+          alert(`Đăng ký Agent "${name}" sử dụng model "${selectedModel}" thành công!\n✅ Không cần Webhook/Tunnel — tự động polling để lấy lượt.`);
           return true;
         } else {
           alert(`Đăng ký thất bại: ${data.detail || JSON.stringify(data)}`);
@@ -3116,13 +3397,113 @@
       }
     }
 
+    // ── My Room state ──────────────────────────────────────────
+    let _myRoomId = null;
+    let _myRoomMatchId = null;
+    let _myRoomGameId = null;
+    let _myRoomPollInterval = null;
+    let _myRoomCreatedAt = null;
+
+    function _updateMyRoomBanner({ statusText, progress, showWatch, matchId }) {
+      const banner = document.getElementById('my-room-banner');
+      const statusEl = document.getElementById('my-room-status-text');
+      const progressEl = document.getElementById('my-room-progress');
+      const watchBtn = document.getElementById('btn-my-room-watch');
+      const pulse = document.getElementById('my-room-pulse');
+
+      if (banner) banner.style.display = '';
+      if (statusEl) statusEl.innerText = statusText;
+      if (progressEl) progressEl.style.width = progress + '%';
+      if (watchBtn) {
+        watchBtn.style.display = showWatch ? '' : 'none';
+        if (matchId) watchBtn.dataset.matchId = matchId;
+      }
+      if (pulse) {
+        pulse.style.background = showWatch ? 'var(--success)' : 'var(--cyan)';
+        pulse.style.animation = showWatch ? 'none' : 'pulse-dot 1.2s infinite';
+      }
+    }
+
+    function watchMyRoom() {
+      const btn = document.getElementById('btn-my-room-watch');
+      const matchId = btn && btn.dataset.matchId;
+      if (!matchId) return;
+      // Stop room polling
+      if (_myRoomPollInterval) { clearInterval(_myRoomPollInterval); _myRoomPollInterval = null; }
+      // Start watching
+      onlineMyPlayerId = document.getElementById('online-agent').value || null;
+      startOnlineStream(matchId);
+    }
+
+    async function cancelMyRoom() {
+      if (!_myRoomId) return;
+      const hubUrl = resolveHubApiUrl(document.getElementById('online-hub-url')?.value?.trim() || '');
+      // Stop polling
+      if (_myRoomPollInterval) { clearInterval(_myRoomPollInterval); _myRoomPollInterval = null; }
+      try {
+        await fetch(`${hubUrl}/api/v1/hub/rooms/${_myRoomId}/cancel`, { method: 'DELETE' });
+      } catch(e) {}
+      _myRoomId = null;
+      _myRoomMatchId = null;
+      // Hide banner
+      const banner = document.getElementById('my-room-banner');
+      if (banner) banner.style.display = 'none';
+      await fetchOnlineRooms();
+    }
+
+    async function _pollMyRoom() {
+      if (!_myRoomId) return;
+      const hubUrl = resolveHubApiUrl(document.getElementById('online-hub-url')?.value?.trim() || '');
+      try {
+        const res = await fetch(`${hubUrl}/api/v1/hub/rooms/${_myRoomId}`);
+        if (!res.ok) return;
+        const room = await res.json();
+
+        const elapsed = _myRoomCreatedAt ? Math.round((Date.now() - _myRoomCreatedAt) / 1000) : 0;
+        const pct = Math.min(95, elapsed * 2); // progress fills slowly
+
+        if (room.status === 'matched' && room.match_id) {
+          // Match started!
+          _myRoomMatchId = room.match_id;
+          _updateMyRoomBanner({
+            statusText: `⚔️ Đối thủ đã vào! Trận đấu bắt đầu!`,
+            progress: 100,
+            showWatch: true,
+            matchId: room.match_id
+          });
+          // Auto-start polling for host player
+          const myAgentId = document.getElementById('online-agent').value;
+          if (myAgentId) {
+            onlineMyPlayerId = myAgentId;
+            onlineMyMatchId = room.match_id;
+          }
+          // Refresh rooms list too
+          await fetchOnlineRooms();
+          // Stop poll loop (already found match)
+          clearInterval(_myRoomPollInterval);
+          _myRoomPollInterval = null;
+        } else if (room.status === 'waiting') {
+          _updateMyRoomBanner({
+            statusText: `⏳ Đang chờ đối thủ... (${elapsed}s) — ID: ${_myRoomId.slice(0, 8)}`,
+            progress: pct,
+            showWatch: false,
+            matchId: null
+          });
+        } else {
+          _updateMyRoomBanner({ statusText: `Trạng thái: ${room.status}`, progress: pct, showWatch: false, matchId: null });
+        }
+      } catch(e) {
+        // silent
+      }
+    }
+
     async function createOnlineRoom() {
       const agentId = document.getElementById('online-agent').value;
       if (!agentId) {
         alert("Vui lòng chọn Agent cục bộ để làm Host!");
         return;
       }
-      const hubUrl = document.getElementById('online-hub-url').value.trim();
+      const hubUrl = resolveHubApiUrl(document.getElementById('online-hub-url').value.trim());
       const gameId = document.getElementById('online-game').value;
 
       const btn = document.getElementById('btn-online-create-room');
@@ -3130,7 +3511,6 @@
       btn.textContent = "Đang tạo...";
 
       try {
-        // Register agent first to ensure metadata is sync'd and model is verified
         const regSuccess = await registerOnlineAgent();
         if (!regSuccess) {
           btn.disabled = false;
@@ -3148,7 +3528,26 @@
         });
         const data = await res.json();
         if (res.ok) {
-          alert(`Tạo phòng đấu thành công! ID: ${data.room_id.slice(0, 8)}`);
+          // Track room state
+          _myRoomId = data.room_id;
+          _myRoomGameId = gameId;
+          _myRoomCreatedAt = Date.now();
+
+          // Show room ID badge
+          const badge = document.getElementById('my-room-id-badge');
+          if (badge) badge.innerText = data.room_id.slice(0, 8);
+
+          // Start banner + polling
+          _updateMyRoomBanner({
+            statusText: `⏳ Đang chờ đối thủ vào phòng... — ID: ${data.room_id.slice(0, 8)}`,
+            progress: 5,
+            showWatch: false,
+            matchId: null
+          });
+
+          if (_myRoomPollInterval) clearInterval(_myRoomPollInterval);
+          _myRoomPollInterval = setInterval(_pollMyRoom, 3000);
+
           await fetchOnlineRooms();
         } else {
           alert(`Lỗi tạo phòng: ${data.detail || JSON.stringify(data)}`);
@@ -3346,7 +3745,7 @@
         return;
       }
 
-      const hubUrl = document.getElementById('online-hub-url').value.trim();
+      const hubUrl = resolveHubApiUrl(document.getElementById('online-hub-url').value.trim());
 
       // Check model availability first
       const statusEl = document.getElementById('modal-challenge-status');
@@ -3382,40 +3781,16 @@
         await loadArenaAgents();
         const agent = ARENA_AGENTS.find(a => a.id === challengerId);
         const name = agent ? agent.name : "Challenger Agent";
-        let webhookUrl = document.getElementById('online-webhook-url').value.trim();
 
-        const isHubLocal = hubUrl.includes('localhost') || hubUrl.includes('127.0.0.1');
-
-        if (!isHubLocal && (!webhookUrl || webhookUrl.includes('localhost') || webhookUrl.includes('127.0.0.1'))) {
-          const confirmTunnel = confirm("⚠️ Cảnh báo: Webhook URL của bạn chưa được cấu hình hoặc đang là địa chỉ cục bộ (localhost), trong khi bạn đang kết nối tới Hub từ xa.\n\nBạn có muốn hệ thống tự động kích hoạt Cloudflare Tunnel để tạo URL công khai (trycloudflare.com) thay thế không?");
-          if (confirmTunnel) {
-            await autoStartCloudflareTunnel();
-            webhookUrl = document.getElementById('online-webhook-url').value.trim();
-          }
-        }
-
-        if (!webhookUrl) {
-          alert("Vui lòng cấu hình Webhook URL công khai hoặc cục bộ hợp lệ!");
-          return;
-        }
-
-        const isWebhookLocal = webhookUrl.includes('localhost') || webhookUrl.includes('127.0.0.1') || webhookUrl.includes('192.168.') || webhookUrl.includes('10.');
-        if (!isHubLocal && isWebhookLocal) {
-          const confirmLocal = confirm("⚠️ Cảnh báo: Bạn đang sử dụng Hub từ xa nhưng Webhook URL lại là địa chỉ cục bộ (localhost/local IP). Hub từ xa sẽ KHÔNG THỂ gửi yêu cầu nước đi đến máy của bạn được.\n\nĐể khắc phục, bạn cần:\n1. Chạy Hub ở máy local (ví dụ http://localhost:8000)\nhoặc 2. Sử dụng ngrok/cloudflare tunnel để tạo URL công khai cho Webhook của bạn.\n\nBạn có muốn tiếp tục khiêu chiến không?");
-          if (!confirmLocal) {
-            return;
-          }
-        }
-
-        // Register agent
+        // Register challenger on Hub (no owner_server_url needed)
         const regRes = await fetch(`${hubUrl}/api/v1/hub/register-agent`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             agent_id: challengerId,
             name: `${name} (${selectedModel})`,
-            owner_server_url: webhookUrl,
             game_id: gameId
+            // No owner_server_url — submit-move architecture!
           })
         });
         if (!regRes.ok) {
@@ -3435,6 +3810,8 @@
         const data = await res.json();
         if (res.ok) {
           closeChallengeModal();
+          // Track our player ID so polling starts when stream opens
+          onlineMyPlayerId = challengerId;
           alert("Đã gia nhập phòng! Bắt đầu live stream.");
           startOnlineStream(data.match_id);
         } else {
@@ -3454,7 +3831,7 @@
         alert("Vui lòng chọn một Agent cục bộ!");
         return;
       }
-      const hubUrl = document.getElementById('online-hub-url').value.trim();
+      const hubUrl = resolveHubApiUrl(document.getElementById('online-hub-url').value.trim());
       const gameId = document.getElementById('online-game').value;
       const btn = document.getElementById('btn-online-queue');
 
@@ -3522,7 +3899,7 @@
     async function loadOnlineLeaderboard() {
       const tbody = document.getElementById('online-leaderboard-body');
       if (!tbody) return;
-      const hubUrl = document.getElementById('online-hub-url').value.trim();
+      const hubUrl = resolveHubApiUrl(document.getElementById('online-hub-url').value.trim());
       const gameId = document.getElementById('online-leaderboard-game').value;
 
       try {
@@ -3554,7 +3931,7 @@
     async function loadOnlineHistory() {
       const container = document.getElementById('online-history-list');
       if (!container) return;
-      const hubUrl = document.getElementById('online-hub-url').value.trim();
+      const hubUrl = resolveHubApiUrl(document.getElementById('online-hub-url').value.trim());
 
       try {
         const res = await fetch(`${hubUrl}/api/v1/hub/matches/list`);
@@ -3592,30 +3969,75 @@
 
     function startOnlineStream(matchId, updateHash = true) {
       if (updateHash) {
-        const gameId = document.getElementById('online-game')?.value || 'chess';
-        window.location.hash = `#online-match?match_id=${matchId}&game_id=${gameId}&mode=stream`;
+        // Try to get game_id from match API to avoid stale dropdown value
+        const hubUrl = resolveHubApiUrl(document.getElementById('online-hub-url')?.value?.trim() || '');
+        if (hubUrl) {
+          fetch(`${hubUrl}/api/v1/hub/matches/${matchId}`)
+            .then(r => r.ok ? r.json() : null)
+            .then(data => {
+              const gameId = (data && data.game_id) ? data.game_id : (document.getElementById('online-game')?.value || 'chess');
+              // Sync dropdown
+              const sel = document.getElementById('online-game');
+              if (sel && gameId) sel.value = gameId;
+              window.location.hash = `#online-match?match_id=${matchId}&game_id=${gameId}&mode=stream`;
+            })
+            .catch(() => {
+              const gameId = document.getElementById('online-game')?.value || 'chess';
+              window.location.hash = `#online-match?match_id=${matchId}&game_id=${gameId}&mode=stream`;
+            });
+        } else {
+          const gameId = document.getElementById('online-game')?.value || 'chess';
+          window.location.hash = `#online-match?match_id=${matchId}&game_id=${gameId}&mode=stream`;
+        }
         return;
       }
       onlineActiveMatchId = matchId;
       showPage('online-match', false);
       
+      // ── Always hide replay toolbar in live stream mode ──
+      const toolbar = document.getElementById('replay-toolbar');
+      if (toolbar) toolbar.style.display = 'none';
+
       const chessContainer = document.getElementById('online-chess-container');
       if (chessContainer) chessContainer.innerHTML = '';
       _onlineLastChessFxKey = null;
       
       const logBody = document.getElementById('online-log-body');
-      logBody.innerHTML = `<div class="chat-msg"><div class="chat-text" style="color: var(--text-muted); font-style: italic;">Đang kết nối SSE stream với Hub qua Proxy...</div></div>`;
+      logBody.innerHTML = `<div class="chat-msg"><div class="chat-text" style="color: var(--text-muted); font-style: italic;">Đang kết nối SSE stream với Hub...</div></div>`;
 
       // Reset score labels
       document.getElementById('online-p1-score').innerText = '0';
       document.getElementById('online-p2-score').innerText = '0';
       document.getElementById('online-turn-indicator').innerText = 'Turn 0';
 
+
       if (onlineEventSource) onlineEventSource.close();
 
-      const hubUrl = document.getElementById('online-hub-url').value.trim();
-      // Connect to the local FastAPI backend SSE proxy
-      onlineEventSource = new EventSource(`${API}/hub/matches/${matchId}/stream?hub_url=${encodeURIComponent(hubUrl)}`);
+      const hubUrl = resolveHubApiUrl(document.getElementById('online-hub-url').value.trim());
+      // game_id: fetch from match API (authoritative), fallback to dropdown
+      let gameId = document.getElementById('online-game')?.value || 'chess';
+
+      // Connect SSE directly to Cloudflare Worker Hub (no local proxy needed)
+      onlineEventSource = new EventSource(`${hubUrl}/api/v1/hub/matches/${matchId}/stream`);
+
+      // Fetch match details to get authoritative game_id and sync UI
+      fetch(`${hubUrl}/api/v1/hub/matches/${matchId}`)
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (data && data.game_id) {
+            gameId = data.game_id;
+            const sel = document.getElementById('online-game');
+            if (sel) sel.value = gameId;
+            console.log(`[Online] Match game_id from API: ${gameId}`);
+          }
+          // Start polling now that we have authoritative gameId
+          autoStartLocalPolling(matchId, gameId);
+          startOnlineStatePoll(matchId, gameId);
+        })
+        .catch(() => {
+          autoStartLocalPolling(matchId, gameId);
+          startOnlineStatePoll(matchId, gameId);
+        });
 
       onlineEventSource.onmessage = function(e) {
         try {
@@ -3641,9 +4063,125 @@
       };
     }
 
+
+    // Per-player poll intervals: { player_id: intervalId }
+    let onlinePlayerPollIntervals = {};
+
+    async function autoStartLocalPolling(matchId, gameId) {
+      const hubUrl = resolveHubApiUrl(document.getElementById('online-hub-url')?.value?.trim() || '');
+      if (!hubUrl) return;
+
+      // Short delay so SSE sync arrives first
+      await new Promise(r => setTimeout(r, 800));
+
+      try {
+        const res = await fetch(`${hubUrl}/api/v1/hub/matches/${matchId}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const p1Id = data.player_1_id;
+        const p2Id = data.player_2_id;
+
+        // Find which local agents are in this match
+        const localIds = new Set(ARENA_AGENTS.map(a => a.id));
+        const toControl = [];
+        if (p1Id && localIds.has(p1Id)) toControl.push(p1Id);
+        if (p2Id && localIds.has(p2Id)) toControl.push(p2Id);
+
+        // Also include onlineMyPlayerId if explicitly set and matches a player
+        if (onlineMyPlayerId && (onlineMyPlayerId === p1Id || onlineMyPlayerId === p2Id)
+            && !toControl.includes(onlineMyPlayerId)) {
+          toControl.push(onlineMyPlayerId);
+        }
+
+        if (toControl.length === 0) {
+          console.warn('[Online] No local agents found in match', matchId, '— watch-only mode.');
+          return;
+        }
+
+        console.log('[Online] Auto-controlling local players:', toControl);
+        for (const pid of toControl) {
+          startPlayerPollLoop(matchId, pid, gameId);
+        }
+      } catch(e) {
+        console.error('[Online] autoStartLocalPolling error:', e.message);
+        if (onlineMyPlayerId) startPlayerPollLoop(matchId, onlineMyPlayerId, gameId);
+      }
+    }
+
+    function startPlayerPollLoop(matchId, playerId, gameId) {
+      // Delegate to global engine (supports multi-match)
+      globalMatchEngine.add(matchId, playerId, gameId);
+      console.log(`[Engine] Tracking ${matchId.slice(-6)}:${playerId.slice(-6)} game=${gameId}`);
+    }
+
+    function stopAllPlayerPolls() {
+      globalMatchEngine.stopAll();
+    }
+
+    let onlineStatePollInterval = null;
+
+    function startOnlineStatePoll(matchId, gameId) {
+      stopOnlineStatePoll();
+      onlineStatePollInterval = setInterval(async () => {
+        const hubUrl = resolveHubApiUrl(document.getElementById('online-hub-url')?.value?.trim() || '');
+        if (!hubUrl) return;
+        try {
+          const res = await fetch(`${hubUrl}/api/v1/hub/matches/${matchId}`);
+          if (!res.ok) return;
+          const data = await res.json();
+          if (!data || !data.state) return;
+
+          // Update turn indicator
+          const turnCount = data.history ? data.history.length : 0;
+          document.getElementById('online-turn-indicator').innerText = `Turn ${turnCount}`;
+
+          // Update board
+          renderOnlineBoard(gameId, data.state);
+
+          // Update player names if needed
+          if (data.player_1) document.getElementById('online-p1-name').innerText = data.player_1;
+          if (data.player_2) document.getElementById('online-p2-name').innerText = data.player_2;
+
+          // Update status badge
+          const badge = document.getElementById('online-status-badge');
+          if (data.status === 'finished') {
+            badge.textContent = 'FINISHED';
+            badge.className = 'match-status-badge status-completed';
+            stopOnlineStatePoll();
+            stopOnlineMovePolling();
+          }
+
+          // If waiting_for_player is set, show in log if not already shown
+          if (data.waiting_for_player) {
+            const turnInd = document.getElementById('online-turn-indicator');
+            if (turnInd) turnInd.innerText = `Turn ${data.turn_count || turnCount} — Chờ ${data.waiting_for_player}...`;
+          }
+        } catch(e) {
+          // Ignore network errors
+        }
+      }, 2000);
+    }
+
+    function stopOnlineStatePoll() {
+      if (onlineStatePollInterval) {
+        clearInterval(onlineStatePollInterval);
+        onlineStatePollInterval = null;
+      }
+    }
+
     let replayInterval = null;
 
     function closeOnlineStream() {
+      stopAllPlayerPolls();
+      stopOnlineMovePolling();
+      stopOnlineStatePoll();
+      _replayPlaying = false;
+      if (replayInterval) { clearInterval(replayInterval); replayInterval = null; }
+      // Hide replay toolbar
+      const toolbar = document.getElementById('replay-toolbar');
+      if (toolbar) toolbar.style.display = 'none';
+      onlineMyPlayerId = null;
+      onlineMyMatchId = null;
       if (onlineEventSource) {
         onlineEventSource.close();
         onlineEventSource = null;
@@ -3685,135 +4223,236 @@
       }
     }
 
+    // ── Replay state ──────────────────────────────────────────
+    let _replayHistory = [];
+    let _replayMatchData = null;
+    let _replayCurrentTurn = 0;   // 0-indexed
+    let _replayPlaying = false;
+    let _replayGameId = 'chess';
+
+    function _replayRenderTurn(idx) {
+      if (!_replayHistory || idx < 0 || idx >= _replayHistory.length) return;
+      _replayCurrentTurn = idx;
+      const turnData = _replayHistory[idx];
+      const logBody = document.getElementById('online-log-body');
+
+      // Board
+      renderOnlineBoard(_replayGameId, turnData.state);
+
+      // Turn indicator
+      document.getElementById('online-turn-indicator').innerText = `Lượt ${turnData.turn}`;
+
+      // Scrubber + turn label
+      const scrubber = document.getElementById('replay-scrubber');
+      if (scrubber) {
+        scrubber.value = idx;
+        document.getElementById('replay-turn-label').innerText = `Lượt ${idx+1}/${_replayHistory.length}`;
+      }
+
+      // Thinking time badge
+      const badge = document.getElementById('replay-thinking-badge');
+      const timeEl = document.getElementById('replay-thinking-time');
+      const timeLabel = document.getElementById('replay-time-label');
+      if (turnData.thinking_time_ms != null) {
+        const secs = (turnData.thinking_time_ms / 1000).toFixed(1);
+        if (badge) { badge.style.display = ''; timeEl.innerText = `${secs}s`; }
+        if (timeLabel) timeLabel.innerText = `${secs}s`;
+      } else {
+        if (badge) badge.style.display = 'none';
+        if (timeLabel) timeLabel.innerText = '—';
+      }
+
+      // Score
+      if (turnData.state) {
+        if (turnData.state.snakes) {
+          document.getElementById('online-p1-score').innerText = turnData.state.snakes.player_1?.score ?? 0;
+          document.getElementById('online-p2-score').innerText = turnData.state.snakes.player_2?.score ?? 0;
+        }
+      }
+
+      // Combat log — highlight current turn entry
+      const entries = logBody.querySelectorAll('.replay-entry');
+      entries.forEach((el, i) => {
+        el.style.background = i === idx ? 'rgba(99,102,241,0.2)' : '';
+        el.style.border = i === idx ? '1px solid var(--accent)' : '1px solid transparent';
+        if (i === idx) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      });
+    }
+
+    function replayStepBy(delta) {
+      _replayPlaying = false;
+      document.getElementById('replay-btn-play').textContent = '▶ Play';
+      if (replayInterval) { clearInterval(replayInterval); replayInterval = null; }
+      const next = Math.max(0, Math.min(_replayCurrentTurn + delta, _replayHistory.length - 1));
+      _replayRenderTurn(next);
+    }
+
+    function onReplayScrub(val) {
+      _replayPlaying = false;
+      document.getElementById('replay-btn-play').textContent = '▶ Play';
+      if (replayInterval) { clearInterval(replayInterval); replayInterval = null; }
+      _replayRenderTurn(parseInt(val));
+    }
+
+    function updateReplaySpeed() {
+      if (_replayPlaying) {
+        // Restart interval with new speed
+        if (replayInterval) { clearInterval(replayInterval); replayInterval = null; }
+        const speed = parseInt(document.getElementById('replay-speed').value);
+        replayInterval = setInterval(_replayAutoStep, speed);
+      }
+    }
+
+    function _replayAutoStep() {
+      if (_replayCurrentTurn >= _replayHistory.length - 1) {
+        _replayPlaying = false;
+        document.getElementById('replay-btn-play').textContent = '▶ Play';
+        clearInterval(replayInterval);
+        replayInterval = null;
+        return;
+      }
+      _replayRenderTurn(_replayCurrentTurn + 1);
+    }
+
+    function toggleReplayPlay() {
+      _replayPlaying = !_replayPlaying;
+      const btn = document.getElementById('replay-btn-play');
+      if (_replayPlaying) {
+        btn.textContent = '⏸ Pause';
+        // If at end, restart from beginning
+        if (_replayCurrentTurn >= _replayHistory.length - 1) _replayCurrentTurn = 0;
+        const speed = parseInt(document.getElementById('replay-speed').value);
+        replayInterval = setInterval(_replayAutoStep, speed);
+      } else {
+        btn.textContent = '▶ Play';
+        if (replayInterval) { clearInterval(replayInterval); replayInterval = null; }
+      }
+    }
+
     async function playOnlineReplay(matchId, gameId, updateHash = true) {
       if (updateHash) {
         window.location.hash = `#online-match?match_id=${matchId}&game_id=${gameId}&mode=replay`;
         return;
       }
-      // Clear any active SSE streams
-      if (onlineEventSource) {
-        onlineEventSource.close();
-        onlineEventSource = null;
-      }
-      
-      // Clear any active replay interval
-      if (replayInterval) {
-        clearInterval(replayInterval);
-        replayInterval = null;
-      }
+
+      // Stop any running intervals
+      if (onlineEventSource) { onlineEventSource.close(); onlineEventSource = null; }
+      stopAllPlayerPolls();
+      stopOnlineStatePoll();
+      _replayPlaying = false;
+      if (replayInterval) { clearInterval(replayInterval); replayInterval = null; }
 
       const chessContainer = document.getElementById('online-chess-container');
       if (chessContainer) chessContainer.innerHTML = '';
       _onlineLastChessFxKey = null;
+      _replayGameId = gameId;
 
       showPage('online-match', false);
-      
-      const logBody = document.getElementById('online-log-body');
-      logBody.innerHTML = `<div class="chat-msg"><div class="chat-text" style="color: var(--text-muted); font-style: italic;">Đang tải dữ liệu lịch sử trận đấu...</div></div>`;
 
-      // Set badge to REPLAY
+      const logBody = document.getElementById('online-log-body');
+      logBody.innerHTML = `<div class="chat-msg"><div class="chat-text" style="color: var(--text-muted); font-style: italic;">Đang tải lịch sử trận đấu...</div></div>`;
+
+      // Show REPLAY badge, hide LIVE indicator
       const statusBadge = document.getElementById('online-status-badge');
-      statusBadge.textContent = 'REPLAY 🎬';
+      statusBadge.textContent = '🎬 REPLAY';
       statusBadge.className = 'match-status-badge status-completed';
 
-      const hubUrl = document.getElementById('online-hub-url').value.trim();
+      // Show replay toolbar
+      const toolbar = document.getElementById('replay-toolbar');
+      if (toolbar) toolbar.style.display = 'flex';
+
+      const hubUrl = resolveHubApiUrl(document.getElementById('online-hub-url').value.trim());
 
       try {
-        // Fetch full match data via local proxy
-        const res = await fetch(`${API}/hub/matches/${matchId}?hub_url=${encodeURIComponent(hubUrl)}`);
-        if (!res.ok) {
-          throw new Error(`Mã lỗi HTTP: ${res.status}`);
-        }
+        const res = await fetch(`${hubUrl}/api/v1/hub/matches/${matchId}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         const history = data.history || [];
 
+        _replayMatchData = data;
+        _replayHistory = history;
+        _replayCurrentTurn = 0;
+
         if (history.length === 0) {
-          if (data.error) {
-            logBody.innerHTML = `<div class="chat-msg"><div class="chat-text" style="color: var(--danger); font-weight:700;">❌ Trận đấu bị lỗi: ${data.error}</div></div>`;
-          } else {
-            logBody.innerHTML = `<div class="chat-msg"><div class="chat-text" style="color: var(--danger);">Không tìm thấy lịch sử các lượt đi của trận đấu này.</div></div>`;
-          }
+          logBody.innerHTML = data.error
+            ? `<div class="chat-msg"><div class="chat-text" style="color:var(--danger);">❌ Lỗi: ${data.error}</div></div>`
+            : `<div class="chat-msg"><div class="chat-text" style="color:var(--danger);">Không có lịch sử nước đi.</div></div>`;
           return;
         }
 
-        // Set player names
+        // Player names
         document.getElementById('online-p1-name').innerText = data.player_1;
         document.getElementById('online-p2-name').innerText = data.player_2;
-        
-        logBody.innerHTML = `<div class="chat-msg"><div class="chat-text" style="color: var(--accent-light); font-weight:700;">🎬 Bắt đầu phát lại trận đấu: ${data.player_1} vs ${data.player_2}</div></div>`;
+        document.getElementById('online-p1-score').innerText = '0';
+        document.getElementById('online-p2-score').innerText = '0';
+        document.getElementById('online-turn-indicator').innerText = 'Lượt 0';
 
-        let currentReplayTurn = 0;
+        // Init scrubber range
+        const scrubber = document.getElementById('replay-scrubber');
+        if (scrubber) {
+          scrubber.max = history.length - 1;
+          scrubber.value = 0;
+          document.getElementById('replay-turn-label').innerText = `Lượt 1/${history.length}`;
+        }
 
-        // Determine playback speed (interval) based on game type
-        let speed = 800; // default for chess
-        if (gameId === 'tetris') speed = 300;
-        if (gameId === 'snake') speed = 200;
-
-        replayInterval = setInterval(() => {
-          if (currentReplayTurn >= history.length) {
-            clearInterval(replayInterval);
-            replayInterval = null;
-            
-            const msgDiv = document.createElement('div');
-            msgDiv.className = 'chat-msg';
-            msgDiv.style.background = 'rgba(99, 102, 241, 0.15)';
-            msgDiv.style.border = '1px solid var(--accent)';
-            msgDiv.innerHTML = `
-              <div class="chat-author" style="color: var(--accent-light)">🏁 KẾT THÚC PHÁT LẠI</div>
-              <div class="chat-text" style="font-weight:700;">Đã phát hết tất cả các nước đi (${history.length} lượt). Người thắng: ${data.winner || 'Hòa'}.</div>
-            `;
-            logBody.appendChild(msgDiv);
-            logBody.scrollTop = logBody.scrollHeight;
-            return;
-          }
-
-          const turnData = history[currentReplayTurn];
-          
-          // Update turn counter in header
-          document.getElementById('online-turn-indicator').innerText = `Lượt ${turnData.turn}`;
-
-          // Draw board
-          renderOnlineBoard(gameId, turnData.state);
-
-          // Update score
-          if (turnData.state) {
-            if (turnData.state.snakes) {
-              document.getElementById('online-p1-score').innerText = turnData.state.snakes.player_1.score;
-              document.getElementById('online-p2-score').innerText = turnData.state.snakes.player_2.score;
-            } else if (turnData.state.player_1) {
-              document.getElementById('online-p1-score').innerText = turnData.state.player_1.score;
-              document.getElementById('online-p2-score').innerText = turnData.state.player_2.score;
-            }
-          }
-
-          // Add message to Combat Log
-          const isP1 = turnData.player === data.player_1;
-          const colorStyle = isP1 ? 'color: var(--success)' : 'color: var(--danger)';
+        // Build combat log entries (all at once, highlight current)
+        logBody.innerHTML = `<div class="chat-msg"><div class="chat-text" style="color:var(--accent-light); font-weight:700;">🎬 ${data.player_1} vs ${data.player_2} — ${history.length} lượt</div></div>`;
+        history.forEach((t, i) => {
+          const isP1 = t.player === data.player_1;
+          const colorStyle = isP1 ? 'color:var(--success)' : 'color:var(--danger)';
           const emoji = isP1 ? '🟢' : '🔴';
-          
+          const thinkStr = t.thinking_time_ms != null ? ` <span style="color:var(--text-muted); font-size:10px;">⏱ ${(t.thinking_time_ms/1000).toFixed(1)}s</span>` : '';
           const msgDiv = document.createElement('div');
-          msgDiv.className = 'chat-msg';
+          msgDiv.className = 'chat-msg replay-entry';
+          msgDiv.style.cursor = 'pointer';
+          msgDiv.style.borderRadius = '6px';
+          msgDiv.style.transition = 'background 0.15s, border 0.15s';
+          msgDiv.style.border = '1px solid transparent';
           msgDiv.innerHTML = `
-            <div class="chat-author" style="${colorStyle}">${emoji} ${turnData.player} (Lượt ${turnData.turn})</div>
-            <div class="chat-text">${turnData.message}</div>
+            <div class="chat-author" style="${colorStyle}">${emoji} ${t.player} (Lượt ${t.turn})${thinkStr}</div>
+            <div class="chat-text">${t.message}</div>
           `;
+          msgDiv.addEventListener('click', () => {
+            _replayPlaying = false;
+            document.getElementById('replay-btn-play').textContent = '▶ Play';
+            if (replayInterval) { clearInterval(replayInterval); replayInterval = null; }
+            _replayRenderTurn(i);
+          });
           logBody.appendChild(msgDiv);
-          logBody.scrollTop = logBody.scrollHeight;
+        });
 
-          currentReplayTurn++;
-        }, speed);
+        // Add final result
+        const endDiv = document.createElement('div');
+        endDiv.className = 'chat-msg';
+        endDiv.style.background = 'rgba(99,102,241,0.15)';
+        endDiv.style.border = '1px solid var(--accent)';
+        endDiv.innerHTML = `<div class="chat-author" style="color:var(--accent-light)">🏁 KẾT THÚC</div>
+          <div class="chat-text" style="font-weight:700;">Người thắng: ${data.winner || 'Hòa'} · ${history.length} lượt</div>`;
+        logBody.appendChild(endDiv);
+
+        // Show first turn
+        _replayRenderTurn(0);
+
+        // Auto-play
+        toggleReplayPlay();
 
       } catch (e) {
-        logBody.innerHTML = `<div class="chat-msg"><div class="chat-text" style="color: var(--danger);">Lỗi tải phát lại: ${e.message}</div></div>`;
+        logBody.innerHTML = `<div class="chat-msg"><div class="chat-text" style="color:var(--danger);">Lỗi tải replay: ${e.message}</div></div>`;
       }
     }
 
     function handleOnlineStreamEvent(data) {
       const logBody = document.getElementById('online-log-body');
       const turnInd = document.getElementById('online-turn-indicator');
-      const gameId = document.getElementById('online-game').value;
+      // Use game_id from event (set by sync) or fall back to dropdown
+      let gameId = document.getElementById('online-game').value;
 
       if (data.event === 'sync') {
+        // Update game dropdown if server tells us the game type
+        if (data.game_id) {
+          const gameSelect = document.getElementById('online-game');
+          if (gameSelect) { gameSelect.value = data.game_id; gameId = data.game_id; }
+        }
         document.getElementById('online-p1-name').innerText = data.player_1;
         document.getElementById('online-p2-name').innerText = data.player_2;
         logBody.innerHTML = `<div class="chat-msg"><div class="chat-text" style="color: var(--success); font-weight:700;">⚔️ Đã kết nối giải đấu: ${data.player_1} vs ${data.player_2} (${data.status})</div></div>`;
@@ -3891,7 +4530,24 @@
         }
 
         renderOnlineBoard(gameId, data.state);
+      } else if (data.event === 'waiting') {
+        // Show which player is being waited on
+        const isMe = data.player_id === onlineMyPlayerId;
+        const logBody = document.getElementById('online-log-body');
+        const msgDiv = document.createElement('div');
+        msgDiv.className = 'chat-msg';
+        msgDiv.style.background = isMe ? 'rgba(99,102,241,0.15)' : 'rgba(0,0,0,0.2)';
+        msgDiv.style.border = isMe ? '1px solid var(--accent)' : '1px solid var(--border)';
+        msgDiv.innerHTML = `
+          <div class="chat-author" style="color: ${isMe ? 'var(--accent-light)' : 'var(--text-secondary)'}">${isMe ? '🎯 ĐẾN LƯỢT BẠN' : '⏳ Đang chờ đối thủ'} (Lượt ${data.turn})</div>
+          <div class="chat-text">${isMe ? 'AI của bạn đang tính toán...' : `Đang chờ ${data.player}...`}</div>
+        `;
+        logBody.appendChild(msgDiv);
+        logBody.scrollTop = logBody.scrollHeight;
+        document.getElementById('online-turn-indicator').innerText = `Turn ${data.turn}`;
+        if (data.state) renderOnlineBoard(document.getElementById('online-game')?.value || 'chess', data.state);
       } else if (data.event === 'end') {
+        stopOnlineMovePolling();
         const msgDiv = document.createElement('div');
         msgDiv.className = 'chat-msg';
         msgDiv.style.background = 'rgba(99, 102, 241, 0.15)';
@@ -3911,6 +4567,7 @@
           onlineEventSource = null;
         }
       } else if (data.event === 'error') {
+        stopOnlineMovePolling();
         const msgDiv = document.createElement('div');
         msgDiv.className = 'chat-msg';
         msgDiv.style.background = 'rgba(239, 68, 68, 0.15)';

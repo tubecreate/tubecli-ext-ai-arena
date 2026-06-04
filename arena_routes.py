@@ -795,10 +795,20 @@ async def match_live(websocket: WebSocket, match_id: str):
 from fastapi.responses import StreamingResponse
 import httpx
 
+def _resolve_hub_api_url(hub_url: str) -> str:
+    """Translate static-asset Cloudflare Workers URLs to the real Zeabur API backend."""
+    import urllib.parse
+    parsed = urllib.parse.urlparse(hub_url)
+    if parsed.hostname and (parsed.hostname.endswith('workers.dev') or parsed.hostname.endswith('github.io')):
+        return 'https://tour.zeabur.app'
+    return hub_url
+
+
 @router.get("/hub/matches/{match_id}/stream")
-async def proxy_hub_stream(match_id: str, hub_url: str = "https://tournament-hub.tubecreate.com"):
+async def proxy_hub_stream(match_id: str, hub_url: str = "https://cloudflare-workers-autoconfig-tournament-hub.tubecli.workers.dev"):
     """Server-side proxy for Central Hub SSE streams to avoid cross-origin (CORS) security blocks in browser."""
     async def event_generator():
+        effective_url = _resolve_hub_api_url(hub_url)
         headers = {"Accept": "text/event-stream"}
         retries = 5
         delay = 1.0
@@ -808,7 +818,7 @@ async def proxy_hub_stream(match_id: str, hub_url: str = "https://tournament-hub
                 async with httpx.AsyncClient(timeout=None) as client:
                     async with client.stream(
                         "GET", 
-                        f"{hub_url.rstrip('/')}/api/v1/hub/matches/{match_id}/stream", 
+                        f"{effective_url.rstrip('/')}/api/v1/hub/matches/{match_id}/stream", 
                         headers=headers
                     ) as response:
                         # Reset retries upon successful connection/stream start
@@ -836,12 +846,13 @@ async def proxy_hub_stream(match_id: str, hub_url: str = "https://tournament-hub
 
 
 @router.get("/hub/matches/{match_id}")
-async def proxy_hub_match_details(match_id: str, hub_url: str = "https://tournament-hub.tubecreate.com"):
+async def proxy_hub_match_details(match_id: str, hub_url: str = "https://cloudflare-workers-autoconfig-tournament-hub.tubecli.workers.dev"):
     """Proxy match details from Central Hub to local browser to avoid CORS blocks."""
     import httpx
+    effective_url = _resolve_hub_api_url(hub_url)
     async with httpx.AsyncClient() as client:
         try:
-            resp = await client.get(f"{hub_url.rstrip('/')}/api/v1/hub/matches/{match_id}")
+            resp = await client.get(f"{effective_url.rstrip('/')}/api/v1/hub/matches/{match_id}")
             if resp.status_code != 200:
                 raise HTTPException(resp.status_code, resp.text)
             return resp.json()
