@@ -1338,6 +1338,33 @@
             </div>
           </div>
 
+          <!-- ── CHESS CLOCK BAR (chess only, hidden for other games) ── -->
+          <div id="online-clock-bar" style="display:none; align-items:stretch; gap:0; background:rgba(0,0,0,0.35); border-bottom:1px solid var(--border);">
+            <!-- P1 clock (White) -->
+            <div id="oclock-p1" style="flex:1; display:flex; align-items:center; gap:12px; padding:10px 20px; border-right:1px solid var(--border); transition:background 0.3s;">
+              <span style="font-size:18px;">&#9812;</span>
+              <div>
+                <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">TR&#7855;NG</div>
+                <div id="oclock-p1-time" style="font-family:'JetBrains Mono',monospace; font-size:24px; font-weight:700; color:var(--text-primary); letter-spacing:2px;">10:00</div>
+              </div>
+              <div id="oclock-p1-inc" style="margin-left:auto; font-size:10px; color:var(--text-muted);"></div>
+            </div>
+            <!-- TC label center -->
+            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:6px 16px; min-width:80px;">
+              <div id="oclock-tc-label" style="font-size:11px; font-weight:700; color:var(--accent-light);">RAPID</div>
+              <div id="oclock-tc-detail" style="font-size:10px; color:var(--text-muted);">10+5</div>
+            </div>
+            <!-- P2 clock (Black) -->
+            <div id="oclock-p2" style="flex:1; display:flex; align-items:center; gap:12px; padding:10px 20px; border-left:1px solid var(--border); justify-content:flex-end; transition:background 0.3s;">
+              <div id="oclock-p2-inc" style="margin-right:auto; font-size:10px; color:var(--text-muted);"></div>
+              <div style="text-align:right;">
+                <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px;">ĐEN</div>
+                <div id="oclock-p2-time" style="font-family:'JetBrains Mono',monospace; font-size:24px; font-weight:700; color:var(--text-primary); letter-spacing:2px;">10:00</div>
+              </div>
+              <span style="font-size:18px;">&#9820;</span>
+            </div>
+          </div>
+
           <!-- ── REPLAY TOOLBAR (hidden by default, shown in replay mode) ── -->
           <div id="replay-toolbar" style="display:none; background: rgba(0,0,0,0.4); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 10px 20px; gap: 10px; flex-direction: column;">
             <!-- Timeline scrubber -->
@@ -4103,11 +4130,11 @@
               // Sync dropdown
               const sel = document.getElementById('online-game');
               if (sel && gameId) sel.value = gameId;
-              window.location.hash = `#online-match?match_id=${matchId}&game_id=${gameId}&mode=stream`;
+              window.location.hash = `#online-match?match_id=${matchId}&game_id=${gameId}&mode=stream&tc=${selectedOnlineTC || 'rapid'}`;
             })
             .catch(() => {
               const gameId = document.getElementById('online-game')?.value || 'chess';
-              window.location.hash = `#online-match?match_id=${matchId}&game_id=${gameId}&mode=stream`;
+              window.location.hash = `#online-match?match_id=${matchId}&game_id=${gameId}&mode=stream&tc=${selectedOnlineTC || 'rapid'}`;
             });
         } else {
           const gameId = document.getElementById('online-game')?.value || 'chess';
@@ -4629,7 +4656,11 @@
         renderOnlineBoard(gameId, data.state);
       } else if (data.event === 'move') {
         turnInd.innerText = `Turn ${data.turn}`;
-        
+
+        // Stop clock for player who just moved + add increment
+        const movedIsP1 = data.player === 'player_1' || data.message?.includes('player_1');
+        _oclkMovePlayed(movedIsP1 ? 'p1' : 'p2');
+
         const isP1 = data.message.includes('player_1') || data.message.includes('Green') || data.player === document.getElementById('online-p1-name').innerText;
         const colorStyle = isP1 ? 'color: var(--success)' : 'color: var(--danger)';
         const author = isP1 ? document.getElementById('online-p1-name').innerText : document.getElementById('online-p2-name').innerText;
@@ -4655,6 +4686,11 @@
 
         renderOnlineBoard(gameId, data.state);
       } else if (data.event === 'waiting') {
+        // Start clock for waiting player
+        // player_1 = White = p1, player_2 = Black = p2
+        const waitP1 = data.player === 'player_1' || data.player_id === document.getElementById('online-p1-name')?.dataset?.pid;
+        _oclkStart(waitP1 ? 'p1' : 'p2');
+
         // Show which player is being waited on
         const isMe = data.player_id === onlineMyPlayerId;
         const logBody = document.getElementById('online-log-body');
@@ -4671,6 +4707,7 @@
         document.getElementById('online-turn-indicator').innerText = `Turn ${data.turn}`;
         if (data.state) renderOnlineBoard(document.getElementById('online-game')?.value || 'chess', data.state);
       } else if (data.event === 'end') {
+        _oclkStop();  // Stop chess clock
         stopOnlineMovePolling();
         const msgDiv = document.createElement('div');
         msgDiv.className = 'chat-msg';
@@ -4713,7 +4750,102 @@
       }
     }
 
+    // ─────────────────────────────────────────────────────────────
+    // ONLINE CHESS CLOCK
+    // ─────────────────────────────────────────────────────────────
+    const _ONLINE_TC_MAP = {
+      bullet:    { label: 'Bullet',    detail: '1+0',   base: 60,    inc: 0  },
+      blitz:     { label: 'Blitz',     detail: '5+0',   base: 300,   inc: 0  },
+      rapid:     { label: 'Rapid',     detail: '10+5',  base: 600,   inc: 5  },
+      classical: { label: 'Classical', detail: '30+30', base: 1800,  inc: 30 },
+      unlimited: { label: '∞',         detail: '∞',     base: 0,     inc: 0  },
+    };
+
+    let _oclk = {
+      p1: 600, p2: 600, inc: 5,
+      active: null, lastTick: null, timer: null, isChess: false,
+    };
+
+    function _oclkFmt(sec) {
+      if (sec <= 0) return '0:00';
+      const m = Math.floor(sec / 60);
+      const s = Math.floor(sec % 60);
+      return `${m}:${s.toString().padStart(2, '0')}`;
+    }
+
+    function _oclkRender() {
+      const p1El = document.getElementById('oclock-p1-time');
+      const p2El = document.getElementById('oclock-p2-time');
+      if (p1El) {
+        p1El.textContent = _oclkFmt(_oclk.p1);
+        p1El.style.color = (_oclk.p1 < 30 && _oclk.active === 'p1') ? 'var(--danger)' : 'var(--text-primary)';
+      }
+      if (p2El) {
+        p2El.textContent = _oclkFmt(_oclk.p2);
+        p2El.style.color = (_oclk.p2 < 30 && _oclk.active === 'p2') ? 'var(--danger)' : 'var(--text-primary)';
+      }
+      const p1Box = document.getElementById('oclock-p1');
+      const p2Box = document.getElementById('oclock-p2');
+      if (p1Box) p1Box.style.background = _oclk.active === 'p1' ? 'rgba(99,102,241,0.2)' : 'transparent';
+      if (p2Box) p2Box.style.background = _oclk.active === 'p2' ? 'rgba(239,68,68,0.2)' : 'transparent';
+    }
+
+    function _oclkStart(player) {
+      _oclkStop();
+      _oclk.active = player;
+      _oclk.lastTick = Date.now();
+      _oclk.timer = setInterval(() => {
+        if (!_oclk.active) return;
+        const now = Date.now();
+        const delta = (now - _oclk.lastTick) / 1000;
+        _oclk.lastTick = now;
+        _oclk[_oclk.active] = Math.max(0, _oclk[_oclk.active] - delta);
+        _oclkRender();
+      }, 100);
+      _oclkRender();
+    }
+
+    function _oclkStop() {
+      if (_oclk.timer) clearInterval(_oclk.timer);
+      _oclk.timer = null;
+      _oclk.active = null;
+    }
+
+    function _oclkMovePlayed(player) {
+      _oclkStop();
+      // Add increment to the player who just moved
+      _oclk[player] = Math.max(0, _oclk[player] + _oclk.inc);
+      _oclkRender();
+    }
+
+    function _oclkReset(tcId) {
+      const tc = _ONLINE_TC_MAP[tcId] || _ONLINE_TC_MAP.rapid;
+      _oclkStop();
+      const bar = document.getElementById('online-clock-bar');
+      if (!tc.base) {
+        if (bar) bar.style.display = 'none';
+        _oclk.isChess = false;
+        return;
+      }
+      _oclk.p1 = tc.base;
+      _oclk.p2 = tc.base;
+      _oclk.inc = tc.inc;
+      _oclk.isChess = true;
+
+      const lbl = document.getElementById('oclock-tc-label');
+      const dtl = document.getElementById('oclock-tc-detail');
+      const inc1 = document.getElementById('oclock-p1-inc');
+      const inc2 = document.getElementById('oclock-p2-inc');
+      if (lbl) lbl.textContent = tc.label.toUpperCase();
+      if (dtl) dtl.textContent = tc.detail;
+      if (inc1) inc1.textContent = tc.inc > 0 ? `+${tc.inc}s` : '';
+      if (inc2) inc2.textContent = tc.inc > 0 ? `+${tc.inc}s` : '';
+      if (bar) bar.style.display = 'flex';
+      _oclkRender();
+    }
+
     function renderOnlineBoard(gameId, state) {
+
       const canvas = document.getElementById('online-game-canvas');
       const chessContainer = document.getElementById('online-chess-container');
       
