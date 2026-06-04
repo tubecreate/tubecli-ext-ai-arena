@@ -1142,19 +1142,27 @@
                 </span>
               </div>
 
-              <div class="slot-status" id="online-status" data-state="idle" style="padding-left: 0; min-height: 18px; margin-top:-4px; margin-bottom: 4px;">
-                <span class="status-dot"></span>
-                <span class="status-text">Chưa kiểm tra</span>
-                <button class="btn-check" onclick="checkOnlineModel()">🔍 Kiểm tra</button>
-              </div>
-
               <div style="display: flex; flex-direction: column; gap: 6px;">
                 <label style="font-size: 12px; color: var(--text-secondary); font-weight: 600;">CHỌN GAME</label>
-                <select id="online-game" style="width: 100%;">
+                <select id="online-game" style="width: 100%;" onchange="onOnlineGameChange()">
                   <option value="chess" selected>♟️ Chess (Cờ vua)</option>
                   <option value="snake">🐍 Snake Arena</option>
                   <option value="tetris">🧱 Tetris Battle</option>
                 </select>
+              </div>
+
+              <!-- Time Control (chess only) -->
+              <div id="online-tc-section" style="display: flex; flex-direction: column; gap: 8px;">
+                <label style="font-size: 12px; color: var(--text-secondary); font-weight: 600;">THỂ THỨC ĐẤU (CHUẨN FIDE)</label>
+                <div id="online-tc-options" class="tc-options" style="grid-template-columns: repeat(5, 1fr); gap: 8px;">
+                  <!-- Filled by JS -->
+                </div>
+              </div>
+
+              <div class="slot-status" id="online-status" data-state="idle" style="padding-left: 0; min-height: 18px; margin-top:-4px; margin-bottom: 4px;">
+                <span class="status-dot"></span>
+                <span class="status-text">Chưa kiểm tra</span>
+                <button class="btn-check" onclick="checkOnlineModel()">🔍 Kiểm tra</button>
               </div>
 
               <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 8px;">
@@ -2891,10 +2899,67 @@
       // 4. Auto-select agent's model
       onOnlineAgentSelect();
 
-      // 5. Fetch waiting rooms and load other cards
+      // 5. Render time controls & game visibility
+      renderOnlineTimeControls();
+      onOnlineGameChange();
+
+      // 6. Fetch waiting rooms and load other cards
       await fetchOnlineRooms();
       await loadOnlineLeaderboard();
       await loadOnlineHistory();
+    }
+
+    // ── Online Time Control ──────────────────────────────────────
+    let selectedOnlineTC = 'rapid';
+
+    const ONLINE_TC_LIST = [
+      { id: 'bullet',    label: 'Bullet',    base: 60,    increment: 0,  desc: '1+0' },
+      { id: 'blitz',     label: 'Blitz',     base: 300,   increment: 0,  desc: '5+0' },
+      { id: 'rapid',     label: 'Rapid',     base: 600,   increment: 5,  desc: '10+5' },
+      { id: 'classical', label: 'Classical', base: 1800,  increment: 30, desc: '30+30' },
+      { id: 'unlimited', label: 'Không giới hạn', base: 0, increment: 0, desc: '∞' },
+    ];
+
+    function renderOnlineTimeControls() {
+      const container = document.getElementById('online-tc-options');
+      if (!container) return;
+
+      // Prefer loaded TIME_CONTROLS if available, else use local fallback
+      const tcs = TIME_CONTROLS.length ? TIME_CONTROLS : ONLINE_TC_LIST;
+
+      container.innerHTML = tcs.map(tc => {
+        const detail = tc.base > 0
+          ? (tc.desc || `${Math.round(tc.base/60)}+${tc.increment}`)
+          : '∞';
+        return `
+          <div class="tc-card ${tc.id === selectedOnlineTC ? 'selected' : ''}"
+               data-otc="${tc.id}"
+               onclick="selectOnlineTC('${tc.id}')"
+               style="padding: 10px 6px; min-width: 0;">
+            <div class="tc-icon">${TC_ICONS[tc.id] || '⏱️'}</div>
+            <div class="tc-label" style="font-size:12px;">${tc.label || tc.id}</div>
+            <div class="tc-detail">${detail}</div>
+          </div>`;
+      }).join('');
+    }
+
+    function selectOnlineTC(id) {
+      selectedOnlineTC = id;
+      document.querySelectorAll('#online-tc-options .tc-card').forEach(c =>
+        c.classList.toggle('selected', c.dataset.otc === id)
+      );
+    }
+
+    function onOnlineGameChange() {
+      const game = document.getElementById('online-game')?.value || 'chess';
+      const tcSection = document.getElementById('online-tc-section');
+      if (tcSection) tcSection.style.display = game === 'chess' ? 'flex' : 'none';
+      // Also update leaderboard filter to match selected game
+      const lbSel = document.getElementById('online-leaderboard-game');
+      if (lbSel && lbSel.value !== game) {
+        lbSel.value = game;
+        loadOnlineLeaderboard();
+      }
     }
 
     function populateOnlineProviders() {
@@ -3555,12 +3620,14 @@
           return;
         }
 
+        const timeControl = gameId === 'chess' ? selectedOnlineTC : null;
         const res = await fetch(`${hubUrl}/api/v1/hub/rooms/create`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             game_id: gameId,
-            player_1_id: agentId
+            player_1_id: agentId,
+            time_control: timeControl
           })
         });
         const data = await res.json();
@@ -3882,12 +3949,14 @@
             btn.textContent = "⚡ Ghép Nhanh";
             return;
           }
+          const timeControl = gameId === 'chess' ? selectedOnlineTC : null;
           const res = await fetch(`${hubUrl}/api/v1/hub/queue/join`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               game_id: gameId,
-              player_id: agentId
+              player_id: agentId,
+              time_control: timeControl
             })
           });
           const data = await res.json();
