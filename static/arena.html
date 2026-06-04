@@ -4709,24 +4709,51 @@
       } else if (data.event === 'end') {
         _oclkStop();  // Stop chess clock
         stopOnlineMovePolling();
+
         const msgDiv = document.createElement('div');
         msgDiv.className = 'chat-msg';
-        msgDiv.style.background = 'rgba(99, 102, 241, 0.15)';
-        msgDiv.style.border = '1px solid var(--accent)';
-        msgDiv.innerHTML = `
-          <div class="chat-author" style="color: var(--accent-light)">🏁 TRẬN ĐẤU KẾT THÚC</div>
-          <div class="chat-text" style="font-weight:700;">Người chiến thắng: ${data.winner}</div>
-        `;
+
+        const winner = data.winner;
+        const errNote = data.error ? `<div style="font-size:11px; color:var(--text-muted); margin-top:4px;">⚠️ ${data.error}</div>` : '';
+
+        if (!winner || winner === 'null') {
+          // Pure error, no winner
+          msgDiv.style.background = 'rgba(239, 68, 68, 0.15)';
+          msgDiv.style.border = '1px solid var(--danger)';
+          msgDiv.innerHTML = `
+            <div class="chat-author" style="color: var(--danger)">🏁 TRẬN ĐẤU KẾT THÚC</div>
+            <div class="chat-text" style="font-weight:700;">Không xác định được kết quả</div>
+            ${errNote}
+          `;
+        } else if (winner === 'draw') {
+          msgDiv.style.background = 'rgba(99, 102, 241, 0.15)';
+          msgDiv.style.border = '1px solid var(--accent)';
+          msgDiv.innerHTML = `
+            <div class="chat-author" style="color: var(--accent-light)">🏁 TRẬN ĐẤU KẾT THÚC</div>
+            <div class="chat-text" style="font-weight:700;">🤝 Hòa!</div>
+            ${errNote}
+          `;
+        } else {
+          msgDiv.style.background = 'rgba(234, 179, 8, 0.12)';
+          msgDiv.style.border = '1px solid rgba(234,179,8,0.4)';
+          msgDiv.innerHTML = `
+            <div class="chat-author" style="color: #fbbf24">🏆 TRẬN ĐẤU KẾT THÚC</div>
+            <div class="chat-text" style="font-weight:700; color:#fde68a;">${winner} chiến thắng!</div>
+            ${errNote}
+          `;
+        }
+
         logBody.appendChild(msgDiv);
         logBody.scrollTop = logBody.scrollHeight;
 
         document.getElementById('online-status-badge').textContent = 'FINISHED';
         document.getElementById('online-status-badge').className = 'match-status-badge status-completed';
-        
+
         if (onlineEventSource) {
           onlineEventSource.close();
           onlineEventSource = null;
         }
+
       } else if (data.event === 'error') {
         stopOnlineMovePolling();
         const msgDiv = document.createElement('div');
