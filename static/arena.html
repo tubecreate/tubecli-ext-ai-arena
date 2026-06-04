@@ -1034,11 +1034,7 @@
         <span class="logo-icon">🎮</span>
         <span class="logo">AI Arena</span>
       </div>
-      <div class="header-right">
-        <button class="nav-btn active" onclick="showPage('lobby')">🏠 Lobby</button>
-        <button class="nav-btn" id="nav-btn-online" onclick="showPage('online')">⚔️ Đấu Online</button>
-        <button class="nav-btn" onclick="showPage('leaderboard')">🏆 Leaderboard</button>
-        <button class="nav-btn" onclick="showPage('history')">📜 History</button>
+      <div class="header-right" id="nav-container">
       </div>
     </header>
 
@@ -1048,20 +1044,64 @@
     <!-- 🔔 Turn toast notification -->
     <div id="match-toast" style="position:fixed; bottom:20px; right:20px; z-index:10000; background:linear-gradient(135deg,rgba(34,197,94,0.92),rgba(16,163,74,0.92)); color:#fff; font-weight:700; font-size:13px; border-radius:10px; padding:10px 18px; box-shadow:0 4px 20px rgba(34,197,94,0.4); opacity:0; transform:translateY(20px); transition:opacity 0.3s, transform 0.3s; cursor:pointer;" onclick="this.style.opacity='0'"></div>
 
-    <!-- Lobby Page -->
-
-    <div id="page-lobby" class="page active">
-      <div class="lobby-hero">
-        <h1 class="lobby-title">⚔️ AI Arena ⚔️</h1>
-        <p class="lobby-subtitle">Cho các AI model đối đầu trong các trò chơi kinh điển</p>
+    <!-- Welcome Page (Chế độ đấu) -->
+    <div id="page-welcome" class="page active">
+      <div class="lobby-hero" style="margin-bottom: 40px;">
+        <h1 class="lobby-title" style="font-size: 38px; font-weight: 800; background: linear-gradient(135deg, #a5b4fc, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">⚔️ AI ARENA ⚔️</h1>
+        <p class="lobby-subtitle" style="font-size: 15px; color: var(--text-secondary);">Chọn chế độ thi đấu để tiếp tục</p>
       </div>
 
-      <!-- Game Selection -->
-      <div class="setup-section">
-        <div class="setup-title">🎯 Chọn Game</div>
-        <div id="game-cards" class="game-cards">
-          <!-- Filled by JS -->
+      <div class="game-cards" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); max-width: 900px; margin: 0 auto; padding: 10px;">
+        <!-- Card 1: Đấu Luyện (Local Offline) -->
+        <div class="game-card" onclick="selectMode('offline')" style="border-color: rgba(129, 140, 248, 0.25); background: rgba(129, 140, 248, 0.02); padding: 40px 30px; text-align: center;">
+          <span class="game-card-icon" style="font-size: 64px; margin-bottom: 20px; display: block;">🛡️</span>
+          <div class="game-card-title" style="font-size: 22px; color: #818cf8; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Đấu Luyện</div>
+          <div class="game-card-desc" style="font-size: 13.5px; margin-top: 12px; min-height: 48px; color: var(--text-secondary); line-height: 1.6;">
+            Huấn luyện AI, đấu tập nội bộ và phân tích chiến thuật trực tiếp trên máy của bạn (Offline).
+          </div>
+          <button class="btn-primary" style="margin-top: 24px; width: 100%; pointer-events: none; background: linear-gradient(135deg, #6366f1, #4f46e5); border: none;">BẮT ĐẦU LUYỆN TẬP</button>
         </div>
+
+        <!-- Card 2: Đấu Trường (Online Tournament) -->
+        <div class="game-card" onclick="selectMode('online')" style="border-color: rgba(56, 189, 248, 0.25); background: rgba(56, 189, 248, 0.02); padding: 40px 30px; text-align: center;">
+          <span class="game-card-icon" style="font-size: 64px; margin-bottom: 20px; display: block;">⚔️</span>
+          <div class="game-card-title" style="font-size: 22px; color: #38bdf8; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Đấu Trường</div>
+          <div class="game-card-desc" style="font-size: 13.5px; margin-top: 12px; min-height: 48px; color: var(--text-secondary); line-height: 1.6;">
+            Thách đấu AI từ các máy khác qua Central Hub, xếp hạng ELO trực tuyến (Online).
+          </div>
+          <button class="btn-primary" style="margin-top: 24px; width: 100%; pointer-events: none; background: linear-gradient(135deg, #0ea5e9, #0284c7); border: none;">VÀO ĐẤU TRƯỜNG</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Game Selection Page -->
+    <div id="page-game-select" class="page">
+      <div class="lobby-hero" style="margin-bottom: 40px;">
+        <h1 class="lobby-title" style="font-size: 32px;" id="game-select-mode-title">🎯 LỰA CHỌN TRÒ CHƠI</h1>
+        <p class="lobby-subtitle" style="font-size: 15px;" id="game-select-mode-subtitle">Chọn một trò chơi để bắt đầu đấu luyện</p>
+      </div>
+
+      <div class="game-cards" id="custom-game-cards" style="max-width: 900px; margin: 0 auto; padding: 10px;">
+        <!-- Filled dynamically by JS -->
+      </div>
+      
+      <div style="text-align: center; margin-top: 30px;">
+        <button class="btn-sm" onclick="goToWelcome()" style="padding: 10px 24px; font-size: 12px; background: rgba(255,255,255,0.05); border-color: var(--border); color: var(--text-secondary);">
+          ⬅️ Quay lại chọn chế độ
+        </button>
+      </div>
+    </div>
+
+    <!-- Lobby Page (Offline Game configuration) -->
+    <div id="page-lobby" class="page">
+      <!-- Title Header showing active offline game -->
+      <div class="setup-section" id="offline-setup-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 16px 28px;">
+        <h2 style="margin: 0; font-size: 18px; font-weight: 800; display: flex; align-items: center; gap: 10px; color: var(--text-primary);" id="offline-setup-title">
+          ♟️ Chess - Cấu hình đấu luyện
+        </h2>
+        <button class="btn-sm" onclick="goToGameSelect()" style="margin: 0; padding: 6px 14px; font-size: 12px; background: rgba(255,255,255,0.05); border-color: var(--border); color: var(--text-secondary);">
+          🔄 Đổi game
+        </button>
       </div>
 
       <!-- Player Setup -->
@@ -1142,7 +1182,7 @@
                 </span>
               </div>
 
-              <div style="display: flex; flex-direction: column; gap: 6px;">
+              <div style="display: none; flex-direction: column; gap: 6px;">
                 <label style="font-size: 12px; color: var(--text-secondary); font-weight: 600;">CHỌN GAME</label>
                 <select id="online-game" style="width: 100%;" onchange="onOnlineGameChange()">
                   <option value="chess" selected>♟️ Chess (Cờ vua)</option>
@@ -1591,17 +1631,134 @@
     let selectedTimeControl = 'rapid';
     let ARENA_AGENTS = [];
 
+    // ── Mode Select & Navigation State ──────────────
+    let currentMode = localStorage.getItem('arena_current_mode') || null;
+    let selectedGameName = localStorage.getItem('arena_selected_game') || null;
+
+    function selectMode(mode) {
+      currentMode = mode;
+      localStorage.setItem('arena_current_mode', mode);
+      
+      // Update UI texts on game selection screen based on mode
+      const titleEl = document.getElementById('game-select-mode-title');
+      const subEl = document.getElementById('game-select-mode-subtitle');
+      if (mode === 'offline') {
+        if (titleEl) titleEl.innerText = "🛡️ ĐẤU LUYỆN - CHỌN TRÒ CHƠI";
+        if (subEl) subEl.innerText = "Chọn game đấu luyện offline để cấu hình đấu thủ và luật chơi";
+      } else {
+        if (titleEl) titleEl.innerText = "⚔️ ĐẤU TRƯỜNG - CHỌN TRÒ CHƠI";
+        if (subEl) subEl.innerText = "Chọn game đấu trực tuyến để kết nối Central Hub và leo rank ELO";
+      }
+
+      showPage('game-select');
+    }
+
+    function goToWelcome() {
+      currentMode = null;
+      selectedGameName = null;
+      localStorage.removeItem('arena_current_mode');
+      localStorage.removeItem('arena_selected_game');
+      showPage('welcome');
+    }
+
+    function goToGameSelect() {
+      selectedGameName = null;
+      localStorage.removeItem('arena_selected_game');
+      if (currentMode) {
+        selectMode(currentMode);
+      } else {
+        showPage('welcome');
+      }
+    }
+
+    function onSelectGame(gameName, minP, maxP) {
+      selectedGameName = gameName;
+      localStorage.setItem('arena_selected_game', gameName);
+
+      if (currentMode === 'offline') {
+        // Setup title header
+        const gameIcon = gameName === 'snake_arena' ? '🐍' : (gameName === 'tetris' ? '🧱' : '♟️');
+        const gameLabel = gameName === 'snake_arena' ? 'Snake Arena' : (gameName === 'tetris' ? 'Tetris Battle' : 'Chess');
+        const headerTitle = document.getElementById('offline-setup-title');
+        if (headerTitle) headerTitle.innerHTML = `${gameIcon} ${gameLabel} - Cấu hình đấu luyện`;
+
+        // Setup the game offline lobby
+        selectGame(gameName, minP, maxP);
+        showPage('lobby');
+      } else {
+        // Map to online game names
+        const onlineGameName = gameName === 'snake_arena' ? 'snake' : (gameName === 'tetris' ? 'tetris' : 'chess');
+        const gameSelect = document.getElementById('online-game');
+        if (gameSelect) {
+          gameSelect.value = onlineGameName;
+          onOnlineGameChange();
+        }
+        showPage('online');
+      }
+    }
+
+    function updateNav(activePage) {
+      const container = document.getElementById('nav-container');
+      if (!container) return;
+
+      if (activePage === 'welcome' || activePage === 'game-select') {
+        if (activePage === 'game-select') {
+          container.innerHTML = `
+            <button class="nav-btn" onclick="goToWelcome()" style="background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3); color: var(--danger); font-weight:700;">⬅️ Chọn Chế Độ</button>
+          `;
+        } else {
+          container.innerHTML = '';
+        }
+        return;
+      }
+
+      if (activePage === 'match' || activePage === 'online-match') {
+        container.innerHTML = '';
+        return;
+      }
+
+      if (currentMode === 'offline') {
+        container.innerHTML = `
+          <button class="nav-btn ${activePage === 'lobby' ? 'active' : ''}" onclick="showPage('lobby')">⚙️ Cấu Hình</button>
+          <button class="nav-btn ${activePage === 'leaderboard' ? 'active' : ''}" onclick="showPage('leaderboard')">🏆 Xếp Hạng</button>
+          <button class="nav-btn ${activePage === 'history' ? 'active' : ''}" onclick="showPage('history')">📜 Lịch Sử</button>
+          <button class="nav-btn" onclick="goToGameSelect()" style="margin-left: 12px; font-weight: 700;">🔄 Đổi Game</button>
+          <button class="nav-btn" onclick="goToWelcome()" style="background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3); color: var(--danger); font-weight: 700;">⬅️ Chọn Chế Độ</button>
+        `;
+      } else if (currentMode === 'online') {
+        container.innerHTML = `
+          <button class="nav-btn ${activePage === 'online' ? 'active' : ''}" onclick="showPage('online')">⚔️ Đấu Trường Hub</button>
+          <button class="nav-btn" onclick="goToGameSelect()" style="margin-left: 12px; font-weight: 700;">🔄 Đổi Game</button>
+          <button class="nav-btn" onclick="goToWelcome()" style="background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3); color: var(--danger); font-weight: 700;">⬅️ Chọn Chế Độ</button>
+        `;
+      }
+    }
+
     // ── Init & Hash Routing ────────────────────────
     function handleHashRouting() {
-      const hash = window.location.hash || '#lobby';
+      const hash = window.location.hash || '';
       const parts = hash.slice(1).split('?');
-      const page = parts[0];
+      let page = parts[0];
       const params = {};
       if (parts[1]) {
         parts[1].split('&').forEach(p => {
           const [k, v] = p.split('=');
           if (k) params[k] = decodeURIComponent(v || '');
         });
+      }
+
+      // Default routing: redirect based on saved state
+      if (!page) {
+        if (!currentMode) {
+          page = 'welcome';
+        } else if (!selectedGameName) {
+          // If a mode was saved but no game was chosen, show the game selector
+          page = 'game-select';
+          // Ensure texts are correct
+          setTimeout(() => selectMode(currentMode), 0);
+        } else {
+          page = currentMode === 'offline' ? 'lobby' : 'online';
+        }
       }
 
       if (page === 'online-match') {
@@ -1620,6 +1777,37 @@
             startOnlineStream(matchId, false);
           }
           return;
+        }
+      }
+
+      // Ensure local variables match state if they navigated via back buttons or direct hash
+      if (page === 'welcome') {
+        currentMode = null;
+        selectedGameName = null;
+        localStorage.removeItem('arena_current_mode');
+        localStorage.removeItem('arena_selected_game');
+      } else if (page === 'game-select') {
+        selectedGameName = null;
+        localStorage.removeItem('arena_selected_game');
+        if (currentMode) {
+          setTimeout(() => selectMode(currentMode), 0);
+        }
+      } else if (page === 'lobby') {
+        currentMode = 'offline';
+        localStorage.setItem('arena_current_mode', 'offline');
+        if (selectedGameName) {
+          const gameIcon = selectedGameName === 'snake_arena' ? '🐍' : (selectedGameName === 'tetris' ? '🧱' : '♟️');
+          const gameLabel = selectedGameName === 'snake_arena' ? 'Snake Arena' : (selectedGameName === 'tetris' ? 'Tetris Battle' : 'Chess');
+          const headerTitle = document.getElementById('offline-setup-title');
+          if (headerTitle) headerTitle.innerHTML = `${gameIcon} ${gameLabel} - Cấu hình đấu luyện`;
+        }
+      } else if (page === 'online') {
+        currentMode = 'online';
+        localStorage.setItem('arena_current_mode', 'online');
+        if (selectedGameName) {
+          const onlineGameName = selectedGameName === 'snake_arena' ? 'snake' : (selectedGameName === 'tetris' ? 'tetris' : 'chess');
+          const gameSelect = document.getElementById('online-game');
+          if (gameSelect) gameSelect.value = onlineGameName;
         }
       }
 
@@ -1732,9 +1920,10 @@
     }
 
     function renderGameCards(games) {
-      const container = document.getElementById('game-cards');
+      const container = document.getElementById('custom-game-cards') || document.getElementById('game-cards');
+      if (!container) return;
       container.innerHTML = games.map(g => `
-        <div class="game-card" data-game="${g.name}" onclick="selectGame('${g.name}', ${g.min_players}, ${g.max_players})">
+        <div class="game-card" data-game="${g.name}" onclick="onSelectGame('${g.name}', ${g.min_players}, ${g.max_players})">
           <span class="game-card-icon">${g.icon}</span>
           <div class="game-card-title">${g.display_name}</div>
           <div class="game-card-desc">${g.description}</div>
@@ -1748,7 +1937,8 @@
 
       // Highlight card
       document.querySelectorAll('.game-card').forEach(c => c.classList.remove('selected'));
-      document.querySelector(`[data-game="${gameName}"]`).classList.add('selected');
+      const card = document.querySelector(`[data-game="${gameName}"]`);
+      if (card) card.classList.add('selected');
 
       // Show player setup
       document.getElementById('player-setup').style.display = 'block';
@@ -2799,7 +2989,11 @@
 
     function closeResult() {
       document.getElementById('result-overlay').classList.remove('show');
-      showPage('lobby');
+      if (currentMode === 'online') {
+        showPage('online');
+      } else {
+        showPage('lobby');
+      }
     }
 
     // ── Navigation ────────────────────────────────
@@ -2812,13 +3006,9 @@
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
       const pageEl = document.getElementById(`page-${page}`);
       if (pageEl) pageEl.classList.add('active');
-      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
       
-      // Find the button by checking its onclick attribute
-      const btn = Array.from(document.querySelectorAll('.nav-btn')).find(b => 
-        b.getAttribute('onclick') && b.getAttribute('onclick').includes(`'${page}'`)
-      );
-      if (btn) btn.classList.add('active');
+      // Update dynamic navigation bar
+      updateNav(page);
 
       if (page === 'leaderboard') loadLeaderboard();
       if (page === 'history') loadHistory();
