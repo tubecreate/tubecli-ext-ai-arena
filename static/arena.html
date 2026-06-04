@@ -3465,23 +3465,32 @@
         if (room.status === 'matched' && room.match_id) {
           // Match started!
           _myRoomMatchId = room.match_id;
-          _updateMyRoomBanner({
-            statusText: `⚔️ Đối thủ đã vào! Trận đấu bắt đầu!`,
-            progress: 100,
-            showWatch: true,
-            matchId: room.match_id
-          });
-          // Auto-start polling for host player
+          // Stop poll loop (already found match)
+          clearInterval(_myRoomPollInterval);
+          _myRoomPollInterval = null;
+
+          // Set host's player ID so autoStartLocalPolling can find it
           const myAgentId = document.getElementById('online-agent').value;
           if (myAgentId) {
             onlineMyPlayerId = myAgentId;
             onlineMyMatchId = room.match_id;
           }
+
+          // ✅ Auto-enter stream immediately — don't wait for user to click "Watch"
+          // This ensures host's AI starts polling BEFORE the 120s turn timeout fires
+          console.log(`%c[Host] ⚔️ Đối thủ đã vào! Tự động mở stream → ${room.match_id.slice(-8)}`, 'color:#f59e0b;font-weight:bold');
+          startOnlineStream(room.match_id);
+
+          // Still show banner as fallback for UX
+          _updateMyRoomBanner({
+            statusText: `⚔️ Đối thủ đã vào! Đang vào trận...`,
+            progress: 100,
+            showWatch: true,
+            matchId: room.match_id
+          });
+
           // Refresh rooms list too
           await fetchOnlineRooms();
-          // Stop poll loop (already found match)
-          clearInterval(_myRoomPollInterval);
-          _myRoomPollInterval = null;
         } else if (room.status === 'waiting') {
           _updateMyRoomBanner({
             statusText: `⏳ Đang chờ đối thủ... (${elapsed}s) — ID: ${_myRoomId.slice(0, 8)}`,
@@ -3496,6 +3505,7 @@
         // silent
       }
     }
+
 
     async function createOnlineRoom() {
       const agentId = document.getElementById('online-agent').value;
