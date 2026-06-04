@@ -621,14 +621,23 @@
     .chess-cell.light { background: #16203a; }
     .chess-cell.dark  { background: #0c1326; }
 
-    /* Last move trail squares */
+    /* Last move highlight squares */
     .chess-cell.last-from {
-      background: rgba(6, 182, 212, 0.12) !important;
-      box-shadow: inset 0 0 0 2px rgba(6, 182, 212, 0.35);
+      background: rgba(6, 182, 212, 0.13) !important;
+      outline: 2px dashed rgba(6, 182, 212, 0.7);
+      outline-offset: -2px;
     }
     .chess-cell.last-to {
-      background: rgba(6, 182, 212, 0.18) !important;
-      box-shadow: inset 0 0 0 2px rgba(6, 182, 212, 0.6);
+      background: rgba(6, 182, 212, 0.22) !important;
+    }
+    /* Radial glow dot at center of destination square */
+    .chess-cell.last-to::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 50%, rgba(6,182,212,0.45) 0%, rgba(6,182,212,0.12) 45%, transparent 70%);
+      pointer-events: none;
+      z-index: 1;
     }
 
     .chess-cell .piece {
@@ -636,7 +645,7 @@
       line-height: 1;
       position: relative;
       z-index: 2;
-      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
     /* White pieces = bright neon white; black pieces = neon cyan */
@@ -649,14 +658,22 @@
       filter: drop-shadow(0 0 6px rgba(34, 211, 238, 0.75));
     }
 
-    /* Piece-landed animation */
+    /* No blink on just-moved — just a gentle scale-in */
     .chess-cell .piece.just-moved {
-      animation: piece-land 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+      animation: piece-land 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     @keyframes piece-land {
-      0%   { transform: scale(1.55); filter: drop-shadow(0 0 14px var(--cyan)); }
-      60%  { transform: scale(0.92); }
+      0%   { transform: scale(1.25); }
       100% { transform: scale(1); }
+    }
+
+    /* SVG move arrow overlay */
+    .chess-move-arrow {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 10;
+      overflow: visible;
     }
 
     /* Move effect overlays (orb + beam) like the reference shots */
@@ -2549,51 +2566,67 @@
 
     function playChessMoveFx(grid, fromSq, toSq) {
       const from = _squareToRC(fromSq);
-      const to = _squareToRC(toSq);
+      const to   = _squareToRC(toSq);
 
-      const fromCell = grid.querySelector(`[data-sq="${fromSq}"]`);
-      const toCell = grid.querySelector(`[data-sq="${toSq}"]`);
+      // Remove any previous arrow
+      const old = grid.querySelector('.chess-move-arrow');
+      if (old) old.remove();
 
-      // Orb pulsing on the origin square.
-      if (fromCell) {
-        const fx = document.createElement('div');
-        fx.className = 'move-fx';
-        fx.innerHTML = '<div class="orb"></div>';
-        fromCell.appendChild(fx);
-        setTimeout(() => fx.remove(), 1300);
-      }
+      const size = grid.clientWidth || grid.offsetWidth || 320;
+      const cell = size / 8;
 
-      // Selection reticle on the destination square.
-      if (toCell) {
-        const ret = document.createElement('div');
-        ret.className = 'move-reticle';
-        ret.style.position = 'absolute';
-        ret.style.inset = '8%';
-        toCell.appendChild(ret);
-        setTimeout(() => ret.remove(), 1400);
-      }
+      // Center-points of each square (in SVG coords)
+      const x1 = (from.file + 0.5) * cell;
+      const y1 = (from.row  + 0.5) * cell;
+      const x2 = (to.file   + 0.5) * cell;
+      const y2 = (to.row    + 0.5) * cell;
 
-      // Energy beam linking the two squares.
-      const size = grid.clientWidth || grid.offsetWidth;
-      if (size) {
-        const cell = size / 8;
-        const x1 = (from.file + 0.5) * cell;
-        const y1 = (from.row + 0.5) * cell;
-        const x2 = (to.file + 0.5) * cell;
-        const y2 = (to.row + 0.5) * cell;
-        const dx = x2 - x1, dy = y2 - y1;
-        const len = Math.hypot(dx, dy);
-        const ang = Math.atan2(dy, dx);
+      const dx = x2 - x1, dy = y2 - y1;
+      const len = Math.hypot(dx, dy);
+      if (len < 1) return;
 
-        const beam = document.createElement('div');
-        beam.className = 'move-beam';
-        beam.style.left = x1 + 'px';
-        beam.style.top = y1 + 'px';
-        beam.style.width = len + 'px';
-        beam.style.transform = `rotate(${ang}rad)`;
-        grid.appendChild(beam);
-        setTimeout(() => beam.remove(), 750);
-      }
+      // Shorten line so arrowhead doesn't cover the piece
+      const ux = dx / len, uy = dy / len;
+      const margin = cell * 0.32;  // how far from centre of dest
+      const ax1 = x1 + ux * cell * 0.25;  // start a bit past centre of origin
+      const ay1 = y1 + uy * cell * 0.25;
+      const ax2 = x2 - ux * margin;        // end before centre of dest
+      const ay2 = y2 - uy * margin;
+
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('class', 'chess-move-arrow');
+      svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
+      svg.setAttribute('width', size);
+      svg.setAttribute('height', size);
+
+      // Arrow marker definition
+      const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+      const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+      marker.setAttribute('id', 'chess-arrow-head');
+      marker.setAttribute('markerWidth', '6');
+      marker.setAttribute('markerHeight', '6');
+      marker.setAttribute('refX', '5');
+      marker.setAttribute('refY', '3');
+      marker.setAttribute('orient', 'auto');
+      const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+      polygon.setAttribute('points', '0 0, 6 3, 0 6');
+      polygon.setAttribute('fill', 'rgba(6,182,212,0.85)');
+      marker.appendChild(polygon);
+      defs.appendChild(marker);
+      svg.appendChild(defs);
+
+      // Arrow shaft
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', ax1); line.setAttribute('y1', ay1);
+      line.setAttribute('x2', ax2); line.setAttribute('y2', ay2);
+      line.setAttribute('stroke', 'rgba(6,182,212,0.75)');
+      line.setAttribute('stroke-width', cell * 0.14);
+      line.setAttribute('stroke-linecap', 'round');
+      line.setAttribute('marker-end', 'url(#chess-arrow-head)');
+      svg.appendChild(line);
+
+      grid.style.position = 'relative';
+      grid.appendChild(svg);
     }
 
     function renderSnakeBoard(container, state) {
