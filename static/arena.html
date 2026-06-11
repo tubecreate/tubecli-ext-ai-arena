@@ -1441,7 +1441,10 @@
 
               <!-- Time Control (chess only) -->
               <div id="online-tc-section" style="display: flex; flex-direction: column; gap: 8px;">
-                <label style="font-size: 12px; color: var(--text-secondary); font-weight: 600;">THỂ THỨC ĐẤU (CHUẨN FIDE)</label>
+                <div style="display:flex; align-items:center; justify-content:space-between;">
+                  <label style="font-size: 12px; color: var(--text-secondary); font-weight: 600;">THỂ THỨC ĐẤU (CHUẨN FIDE)</label>
+                  <button class="btn-sm" onclick="selectRandomOnlineTC()" style="margin:0; padding:3px 10px; font-size:11px; background:rgba(168,85,247,0.15); border-color:rgba(168,85,247,0.5); color:#c084fc;">🎲 Ngẫu Nhiên</button>
+                </div>
                 <div id="online-tc-options" class="tc-options" style="grid-template-columns: repeat(5, 1fr); gap: 8px;">
                   <!-- Filled by JS -->
                 </div>
@@ -1453,10 +1456,23 @@
                 <button class="btn-check" onclick="checkOnlineModel()">🔍 Kiểm tra</button>
               </div>
 
-              <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 8px;">
-                <button class="btn-primary" id="btn-online-register" onclick="registerOnlineAgent()" style="width: 100%; font-size: 14px; padding: 10px;">
-                  🔗 Đăng ký Agent lên Hub
-                </button>
+              <!-- Online Registration Toggle -->
+              <div id="online-register-section" style="display: flex; flex-direction: column; gap: 10px; margin-top: 8px;">
+                <!-- State: offline -->
+                <div id="online-reg-offline" style="display:flex; flex-direction:column; gap:8px;">
+                  <button class="btn-primary" id="btn-online-register" onclick="goOnline()" style="width: 100%; font-size: 14px; padding: 10px; background: linear-gradient(135deg, #6366f1, #4f46e5); box-shadow: 0 4px 20px rgba(99,102,241,0.3);">
+                    🔗 Đăng ký Online
+                  </button>
+                </div>
+                <!-- State: online -->
+                <div id="online-reg-online" style="display:none; flex-direction:column; gap:8px;">
+                  <div style="display:flex; align-items:center; gap:10px; padding:10px 14px; background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.35); border-radius:10px;">
+                    <span class="status-dot" style="width:10px;height:10px;border-radius:50%;background:var(--success);box-shadow:0 0 8px var(--success);flex-shrink:0;animation:pulse-dot 1.5s infinite;"></span>
+                    <span id="online-reg-name" style="font-weight:700; font-size:13px; color:var(--success); flex:1;">Đang Online</span>
+                    <button onclick="goOffline()" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.35); color:#f87171; padding:4px 12px; border-radius:7px; font-size:12px; font-weight:700; cursor:pointer;">🔴 Hủy</button>
+                  </div>
+                </div>
+                <!-- Quick match + Room buttons always visible -->
                 <div style="display: flex; gap: 10px;">
                   <button class="btn-primary" id="btn-online-create-room" onclick="createOnlineRoom()" style="flex: 1; font-size: 13px; padding: 10px; background: linear-gradient(135deg, var(--cyan), var(--accent-dark)); box-shadow: 0 4px 20px rgba(6, 182, 212, 0.3);">
                     🏠 Tạo phòng
@@ -1470,33 +1486,64 @@
           </div>
         </div>
 
-        <!-- Right Panel: Waiting Rooms -->
+        <!-- Right Panel: Two-tab layout -->
         <div style="display: flex; flex-direction: column; gap: 20px;">
-          <!-- Active Waiting Rooms -->
-          <div class="setup-section" style="flex: 1;">
-            <div class="setup-title" style="justify-content: space-between;">
-              <span>🏠 Phòng Đang Đợi Đối Thủ (Challenge)</span>
-              <button class="btn-sm" onclick="fetchOnlineRooms()" style="margin: 0; padding: 4px 10px; font-size: 11px;">🔄 Làm mới</button>
+          <div class="setup-section" style="flex: 1; display:flex; flex-direction:column;">
+            <!-- Tab headers -->
+            <div style="display:flex; border-bottom:1px solid var(--border); margin-bottom:12px;">
+              <button id="tab-btn-agents" onclick="switchOnlineTab('agents')" style="flex:1; padding:8px 4px; font-size:13px; font-weight:700; border:none; background:transparent; color:var(--success); border-bottom:2px solid var(--success); cursor:pointer; transition:all 0.2s;">🟢 Agents Online</button>
+              <button id="tab-btn-rooms" onclick="switchOnlineTab('rooms')" style="flex:1; padding:8px 4px; font-size:13px; font-weight:700; border:none; background:transparent; color:var(--text-muted); border-bottom:2px solid transparent; cursor:pointer; transition:all 0.2s;">🏠 Phòng Chờ</button>
             </div>
-            <div style="overflow-x: auto; max-height: 520px; margin-top: 10px;">
-              <table class="leaderboard-table" id="online-rooms-table" style="font-size: 13px;">
-                <thead>
-                  <tr>
-                    <th style="width: 15%;">ID Phòng</th>
-                    <th style="width: 15%;">Game</th>
-                    <th style="width: 15%;">Thể thức</th>
-                    <th style="width: 30%;">Chủ phòng</th>
-                    <th style="width: 25%;">Hành động</th>
-                  </tr>
-                </thead>
-                <tbody id="online-rooms-body">
-                  <tr>
-                    <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">
-                      Không có phòng nào đang mở. Hãy tạo phòng mới ở bên trái!
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+
+            <!-- Online Agents Tab -->
+            <div id="tab-panel-agents" style="flex:1;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <span style="font-size:12px; color:var(--text-muted);">Chọn đối thủ để thách đấu trực tiếp</span>
+                <button class="btn-sm" onclick="fetchOnlineAgents()" style="margin:0; padding:4px 10px; font-size:11px;">🔄 Làm mới</button>
+              </div>
+              <div style="overflow-x: auto; max-height: 480px;">
+                <table class="leaderboard-table" id="online-agents-table" style="font-size: 13px;">
+                  <thead>
+                    <tr>
+                      <th style="width: 10%;">Trạng thái</th>
+                      <th style="width: 40%;">Agent</th>
+                      <th style="width: 20%;">Thể thức</th>
+                      <th style="width: 30%;">Hành động</th>
+                    </tr>
+                  </thead>
+                  <tbody id="online-agents-body">
+                    <tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:20px;">Đang tải...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Waiting Rooms Tab -->
+            <div id="tab-panel-rooms" style="flex:1; display:none;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <span style="font-size:12px; color:var(--text-muted);">Phòng do host tạo, chờ đối thủ vào</span>
+                <button class="btn-sm" onclick="fetchOnlineRooms()" style="margin:0; padding:4px 10px; font-size:11px;">🔄 Làm mới</button>
+              </div>
+              <div style="overflow-x: auto; max-height: 480px;">
+                <table class="leaderboard-table" id="online-rooms-table" style="font-size: 13px;">
+                  <thead>
+                    <tr>
+                      <th style="width: 15%;">ID Phòng</th>
+                      <th style="width: 15%;">Game</th>
+                      <th style="width: 15%;">Thể thức</th>
+                      <th style="width: 30%;">Chủ phòng</th>
+                      <th style="width: 25%;">Hành động</th>
+                    </tr>
+                  </thead>
+                  <tbody id="online-rooms-body">
+                    <tr>
+                      <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 20px;">
+                        Không có phòng nào đang mở. Hãy tạo phòng mới ở bên trái!
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
@@ -1751,14 +1798,23 @@
     <div id="challenge-modal" class="result-overlay">
       <div class="result-card" style="max-width: 480px; text-align: left; padding: 32px;">
         <h2 style="font-size: 20px; font-weight: 800; margin-bottom: 20px; display: flex; align-items: center; gap: 8px;">
-          ⚔️ Thiết lập Khiêu chiến
+          ⚔️ <span id="modal-challenge-title">Thiết lập Khiêu chiến</span>
         </h2>
         
         <div style="display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px;">
-          <div style="font-size: 13px; color: var(--text-secondary); background: rgba(0,0,0,0.25); padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
-            <div><strong>Phòng ID:</strong> <span id="modal-challenge-room-id" style="font-family: 'JetBrains Mono', monospace; color: var(--accent-light);"></span></div>
+          <div id="modal-challenge-info" style="font-size: 13px; color: var(--text-secondary); background: rgba(0,0,0,0.25); padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
+            <div id="modal-info-room" style="display:none;"><strong>Phòng ID:</strong> <span id="modal-challenge-room-id" style="font-family: 'JetBrains Mono', monospace; color: var(--accent-light);"></span></div>
             <div style="margin-top: 4px;"><strong>Game:</strong> <span id="modal-challenge-game"></span></div>
-            <div style="margin-top: 4px;"><strong>Chủ phòng:</strong> <span id="modal-challenge-host" style="font-family: 'JetBrains Mono', monospace;"></span></div>
+            <div style="margin-top: 4px;"><strong>Đối thủ:</strong> <span id="modal-challenge-host" style="font-family: 'JetBrains Mono', monospace; color:var(--success);"></span></div>
+            <!-- Direct challenge TC selection -->
+            <div id="modal-direct-tc-section" style="display:none; margin-top:10px; flex-direction:column; gap:6px;">
+              <div style="display:flex; align-items:center; justify-content:space-between;">
+                <label style="font-size:11px; color:var(--text-secondary); font-weight:600;">THỂ THỨC ĐẤU</label>
+                <button onclick="selectRandomModalTC()" style="background:rgba(168,85,247,0.15); border:1px solid rgba(168,85,247,0.5); color:#c084fc; padding:2px 8px; border-radius:5px; font-size:10px; cursor:pointer;">🎲 Ngẫu Nhiên</button>
+              </div>
+              <div id="modal-direct-tc-options" class="tc-options" style="grid-template-columns: repeat(5, 1fr); gap:6px;">
+              </div>
+            </div>
           </div>
           
           <div style="display: flex; flex-direction: column; gap: 6px;">
@@ -1803,7 +1859,7 @@
         
         <div style="display: flex; gap: 12px; justify-content: flex-end;">
           <button class="btn-sm" style="margin: 0; padding: 8px 16px; border-radius: 8px;" onclick="closeChallengeModal()">Hủy</button>
-          <button class="btn-primary" id="btn-modal-confirm-challenge" onclick="confirmChallengeOnlineRoom()" style="font-size: 13px; padding: 8px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);">
+          <button class="btn-primary" id="btn-modal-confirm-challenge" onclick="confirmChallengeDispatch()" style="font-size: 13px; padding: 8px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);">
             ⚔️ Khiêu chiến
           </button>
         </div>
@@ -3476,6 +3532,13 @@
 
     // ── Online Tournament Hub Integration ──────────
     let onlineInQueue = false;
+    let onlineRegistered = false;       // true when agent is registered as "online"
+    let onlineRegisteredAgentId = null; // agent_id of our registered agent
+    let _onlineHeartbeatTimer = null;   // setInterval handle for heartbeat
+    let _onlineIncomingPoll = null;     // setInterval handle for incoming match polling
+    let _onlineAgentsAutoRefresh = null;// setInterval for agents list auto-refresh
+    let _pendingDirectChallenge = null; // { target_id, target_name, game_id } for direct agent challenge
+    let _selectedModalTC = 'rapid';    // time control selected in direct-challenge modal
     let onlineEventSource = null;
     let onlineActiveMatchId = null;
 
@@ -3509,8 +3572,13 @@
       renderOnlineTimeControls();
       onOnlineGameChange();
 
-      // 6. Fetch waiting rooms
+      // 6. Fetch online agents (default tab) + waiting rooms
+      await fetchOnlineAgents();
       await fetchOnlineRooms();
+
+      // 7. Start auto-refresh of online agents every 6s
+      if (_onlineAgentsAutoRefresh) clearInterval(_onlineAgentsAutoRefresh);
+      _onlineAgentsAutoRefresh = setInterval(fetchOnlineAgents, 6000);
     }
 
     // ── Online Time Control ──────────────────────────────────────
@@ -3552,6 +3620,301 @@
       document.querySelectorAll('#online-tc-options .tc-card').forEach(c =>
         c.classList.toggle('selected', c.dataset.otc === id)
       );
+    }
+
+    function selectRandomOnlineTC() {
+      const tcs = TIME_CONTROLS.length ? TIME_CONTROLS : ONLINE_TC_LIST;
+      const pick = tcs[Math.floor(Math.random() * tcs.length)];
+      if (pick) selectOnlineTC(pick.id);
+    }
+
+    // ── Online Tab Switcher ───────────────────────────────────────
+    function switchOnlineTab(tab) {
+      const agentPanel = document.getElementById('tab-panel-agents');
+      const roomPanel  = document.getElementById('tab-panel-rooms');
+      const agentBtn   = document.getElementById('tab-btn-agents');
+      const roomBtn    = document.getElementById('tab-btn-rooms');
+      if (!agentPanel) return;
+      const isAgents = tab === 'agents';
+      agentPanel.style.display = isAgents ? '' : 'none';
+      roomPanel.style.display  = isAgents ? 'none' : '';
+      if (agentBtn) {
+        agentBtn.style.color = isAgents ? 'var(--success)' : 'var(--text-muted)';
+        agentBtn.style.borderBottom = isAgents ? '2px solid var(--success)' : '2px solid transparent';
+      }
+      if (roomBtn) {
+        roomBtn.style.color = isAgents ? 'var(--text-muted)' : 'var(--accent-light)';
+        roomBtn.style.borderBottom = isAgents ? '2px solid transparent' : '2px solid var(--accent-light)';
+      }
+      if (!isAgents) fetchOnlineRooms();
+    }
+
+    // ── Online Registration (Go Online / Go Offline) ──────────────
+    function _setOnlineRegUI(isOnline, agentName) {
+      const offDiv = document.getElementById('online-reg-offline');
+      const onDiv  = document.getElementById('online-reg-online');
+      const nameEl = document.getElementById('online-reg-name');
+      if (offDiv) offDiv.style.display = isOnline ? 'none' : 'flex';
+      if (onDiv)  onDiv.style.display  = isOnline ? 'flex' : 'none';
+      if (nameEl && agentName) nameEl.textContent = `🟢 ${agentName} — Đang Online`;
+    }
+
+    async function goOnline() {
+      const btn = document.getElementById('btn-online-register');
+      if (btn) { btn.disabled = true; btn.textContent = 'Đang đăng ký...'; }
+      try {
+        const success = await registerOnlineAgent();
+        if (success) {
+          onlineRegistered = true;
+          onlineRegisteredAgentId = document.getElementById('online-agent').value;
+          const agent = ARENA_AGENTS.find(a => a.id === onlineRegisteredAgentId);
+          _setOnlineRegUI(true, agent ? agent.name : onlineRegisteredAgentId);
+          // Start heartbeat every 8s
+          if (_onlineHeartbeatTimer) clearInterval(_onlineHeartbeatTimer);
+          _onlineHeartbeatTimer = setInterval(_sendHeartbeat, 8000);
+          // Start polling for incoming challenge every 3s
+          if (_onlineIncomingPoll) clearInterval(_onlineIncomingPoll);
+          _onlineIncomingPoll = setInterval(_pollIncomingMatch, 3000);
+          // Refresh agents list immediately
+          await fetchOnlineAgents();
+        }
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = '🔗 Đăng ký Online'; }
+      }
+    }
+
+    async function goOffline() {
+      if (_onlineHeartbeatTimer) { clearInterval(_onlineHeartbeatTimer); _onlineHeartbeatTimer = null; }
+      if (_onlineIncomingPoll)   { clearInterval(_onlineIncomingPoll);   _onlineIncomingPoll = null; }
+      const hubUrl = resolveHubApiUrl(document.getElementById('online-hub-url')?.value?.trim() || '');
+      if (onlineRegisteredAgentId && hubUrl) {
+        try {
+          await fetch(`${hubUrl}/api/v1/hub/agents/${onlineRegisteredAgentId}`, {
+            method: 'DELETE', keepalive: true
+          });
+        } catch(e) {}
+      }
+      onlineRegistered = false;
+      onlineRegisteredAgentId = null;
+      _setOnlineRegUI(false, null);
+      fetchOnlineAgents();
+    }
+
+    async function _sendHeartbeat() {
+      if (!onlineRegisteredAgentId) return;
+      const hubUrl = resolveHubApiUrl(document.getElementById('online-hub-url')?.value?.trim() || '');
+      if (!hubUrl) return;
+      try {
+        await fetch(`${hubUrl}/api/v1/hub/agents/${onlineRegisteredAgentId}/heartbeat`, { method: 'POST', keepalive: true });
+      } catch(e) {}
+    }
+
+    let _lastSeenIncomingMatchId = null;
+    async function _pollIncomingMatch() {
+      if (!onlineRegisteredAgentId) return;
+      const hubUrl = resolveHubApiUrl(document.getElementById('online-hub-url')?.value?.trim() || '');
+      if (!hubUrl) return;
+      try {
+        const res = await fetch(`${hubUrl}/api/v1/hub/agents/${onlineRegisteredAgentId}/active-match`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.match && data.match.match_id && data.match.match_id !== _lastSeenIncomingMatchId) {
+          _lastSeenIncomingMatchId = data.match.match_id;
+          console.log(`%c[Online] 📩 Trận đấu mới đến: ${data.match.match_id.slice(-8)}`, 'color:#22c55e;font-weight:bold');
+          // Stop polling — we're entering a match
+          if (_onlineIncomingPoll) { clearInterval(_onlineIncomingPoll); _onlineIncomingPoll = null; }
+          onlineMyPlayerId = onlineRegisteredAgentId;
+          startOnlineStream(data.match.match_id);
+        }
+      } catch(e) {}
+    }
+
+    // ── Online Agents List ────────────────────────────────────────
+    async function fetchOnlineAgents() {
+      const tbody = document.getElementById('online-agents-body');
+      if (!tbody) return;
+      const hubUrl = resolveHubApiUrl(document.getElementById('online-hub-url')?.value?.trim() || '');
+      if (!hubUrl) return;
+      const gameId = document.getElementById('online-game')?.value || 'chess';
+      try {
+        const res = await fetch(`${hubUrl}/api/v1/hub/agents?game_id=${gameId}&online_only=true`);
+        if (!res.ok) { tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--danger);padding:20px;">Lỗi tải agents</td></tr>`; return; }
+        const data = await res.json();
+        const agents = (data.items || []);
+
+        if (agents.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:24px;">Chưa có agents nào đang online.<br><span style="font-size:11px;">Nhấn "Đăng ký Online" để xuất hiện ở đây!</span></td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = agents.map(a => {
+          const isMe = a.agent_id === onlineRegisteredAgentId;
+          const isBusy = !!a.is_busy;
+          const statusDot = isBusy
+            ? `<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#f59e0b;box-shadow:0 0 6px #f59e0b;" title="Đang đánh"></span>`
+            : `<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--success);box-shadow:0 0 6px var(--success);animation:pulse-dot 1.5s infinite;" title="Sẵn sàng"></span>`;
+          const statusLabel = isBusy
+            ? `<span style="font-size:10px;color:#f59e0b;font-weight:700;">Đang đấu</span>`
+            : `<span style="font-size:10px;color:var(--success);font-weight:700;">Sẵn sàng</span>`;
+          const agentName = a.name || a.agent_id.slice(0, 12);
+          const meTag = isMe ? `<span style="font-size:9px;background:rgba(99,102,241,0.25);color:var(--accent-light);padding:1px 5px;border-radius:4px;margin-left:4px;">Tôi</span>` : '';
+          // Time control chip
+          const tcLabel = a.game_id === 'chess' ? `<span style="font-size:11px;color:var(--text-muted);">${a.game_id}</span>` : '—';
+          const actionBtn = isMe
+            ? `<span style="font-size:11px;color:var(--text-muted);">Chính bạn</span>`
+            : isBusy
+              ? `<button disabled style="opacity:0.4;padding:4px 10px;font-size:11px;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--text-muted);cursor:not-allowed;">⏳ Bận</button>`
+              : `<button class="btn-sm" style="background:rgba(99,102,241,0.2);border-color:var(--accent);color:var(--accent-light);padding:4px 12px;" onclick="openDirectChallengeModal('${a.agent_id}','${agentName.replace(/'/g,"\\'")}','${a.game_id}')">⚔️ Thách đấu</button>`;
+          return `
+            <tr style="${isMe ? 'background:rgba(99,102,241,0.07);' : ''}">
+              <td style="text-align:center;">${statusDot}<br>${statusLabel}</td>
+              <td>
+                <div style="font-weight:700;font-size:13px;">${agentName}${meTag}</div>
+                <div style="font-size:10px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;">${a.agent_id.slice(0,10)}…</div>
+              </td>
+              <td>${tcLabel}</td>
+              <td>${actionBtn}</td>
+            </tr>`;
+        }).join('');
+      } catch(e) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--danger);padding:20px;">Lỗi: ${e.message}</td></tr>`;
+      }
+    }
+
+    // ── Direct Challenge Modal ────────────────────────────────────
+    let _modalDirectTC = 'rapid';
+
+    function renderModalDirectTC() {
+      const container = document.getElementById('modal-direct-tc-options');
+      if (!container) return;
+      const tcs = TIME_CONTROLS.length ? TIME_CONTROLS : ONLINE_TC_LIST;
+      container.innerHTML = tcs.map(tc => {
+        const detail = tc.base > 0 ? (tc.desc || `${Math.round(tc.base/60)}+${tc.increment}`) : '∞';
+        return `<div class="tc-card ${tc.id === _modalDirectTC ? 'selected' : ''}"
+          data-dtc="${tc.id}" onclick="selectModalDirectTC('${tc.id}')"
+          style="padding:8px 4px;min-width:0;">
+          <div class="tc-icon">${TC_ICONS[tc.id]||'⏱️'}</div>
+          <div class="tc-label" style="font-size:11px;">${tc.label||tc.id}</div>
+          <div class="tc-detail">${detail}</div>
+        </div>`;
+      }).join('');
+    }
+
+    function selectModalDirectTC(id) {
+      _modalDirectTC = id;
+      document.querySelectorAll('#modal-direct-tc-options .tc-card').forEach(c =>
+        c.classList.toggle('selected', c.dataset.dtc === id)
+      );
+    }
+
+    function selectRandomModalTC() {
+      const tcs = TIME_CONTROLS.length ? TIME_CONTROLS : ONLINE_TC_LIST;
+      const pick = tcs[Math.floor(Math.random() * tcs.length)];
+      if (pick) selectModalDirectTC(pick.id);
+    }
+
+    function openDirectChallengeModal(targetId, targetName, gameId) {
+      _pendingDirectChallenge = { target_id: targetId, target_name: targetName, game_id: gameId };
+      // Set modal to "direct" mode
+      const titleEl = document.getElementById('modal-challenge-title');
+      const roomInfoEl = document.getElementById('modal-info-room');
+      const directTCSection = document.getElementById('modal-direct-tc-section');
+      const gameEl = document.getElementById('modal-challenge-game');
+      const hostEl = document.getElementById('modal-challenge-host');
+      if (titleEl) titleEl.textContent = 'Thách đấu Trực tiếp';
+      if (roomInfoEl) roomInfoEl.style.display = 'none';
+      if (directTCSection) directTCSection.style.display = 'flex';
+      if (gameEl) gameEl.textContent = gameId === 'snake' ? '🐍 Snake Arena' : (gameId === 'tetris' ? '🧱 Tetris Battle' : '♟️ Chess (Cờ vua)');
+      if (hostEl) hostEl.textContent = targetName;
+      // Render TC
+      renderModalDirectTC();
+      // Populate agent dropdown
+      const modalAgentSelect = document.getElementById('modal-challenge-agent');
+      let html = ARENA_AGENTS.map(a =>
+        `<option value="${a.id}">${a.name} (${a.model || '—'})</option>`
+      ).join('');
+      if (!html) html = '<option value="">Chưa cấu hình Agent nào</option>';
+      modalAgentSelect.innerHTML = html;
+      populateModalProviders();
+      onModalAgentSelect();
+      document.getElementById('challenge-modal').classList.add('show');
+    }
+
+    // Dispatcher: direct challenge vs. room challenge
+    async function confirmChallengeDispatch() {
+      if (_pendingDirectChallenge) {
+        await _confirmDirectChallenge();
+      } else {
+        await confirmChallengeOnlineRoom();
+      }
+    }
+
+    async function _confirmDirectChallenge() {
+      if (!_pendingDirectChallenge) return;
+      const { target_id, game_id } = _pendingDirectChallenge;
+      let challengerId = document.getElementById('modal-challenge-agent').value;
+      if (!challengerId) { alert('Vui lòng chọn một Agent khiêu chiến!'); return; }
+
+      const hubUrl = resolveHubApiUrl(document.getElementById('online-hub-url').value.trim());
+      const selectedProvider = document.getElementById('modal-challenge-provider').value;
+      const selectedModel = document.getElementById('modal-challenge-model').value.trim();
+
+      // Create temp agent if guest
+      if (challengerId === 'guest_temp') {
+        const guestName = document.getElementById('modal-guest-name').value.trim() || 'Khách vãn lai';
+        const guestKey  = document.getElementById('modal-guest-key').value.trim();
+        try { challengerId = await createTemporaryAgent(guestName, selectedProvider, selectedModel, guestKey); }
+        catch(err) { alert(`Lỗi tạo Agent tạm thời: ${err.message}`); return; }
+      }
+
+      // Model check
+      const statusEl = document.getElementById('modal-challenge-status');
+      if (statusEl && statusEl.dataset.state !== 'ok') {
+        const isOk = await checkModalChallengeModel();
+        if (!isOk) { alert('Kiểm tra model thất bại!'); return; }
+      }
+
+      const btn = document.getElementById('btn-modal-confirm-challenge');
+      btn.disabled = true; btn.textContent = 'Đang kết nối...';
+
+      try {
+        // Update challenger's model config locally
+        const updateRes = await fetch(`/api/v1/agents/${challengerId}`, {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model: `${selectedProvider}/${selectedModel}`, browser_ai_model: `${selectedProvider}/${selectedModel}` })
+        });
+        if (!updateRes.ok) throw new Error('Không thể cập nhật cấu hình Model.');
+
+        await loadArenaAgents();
+        const agent = ARENA_AGENTS.find(a => a.id === challengerId);
+        const cName = agent ? agent.name : 'Challenger';
+
+        // Auto-register challenger on Hub
+        const regRes = await fetch(`${hubUrl}/api/v1/hub/register-agent`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ agent_id: challengerId, name: `${cName} (${selectedModel})`, game_id })
+        });
+        if (!regRes.ok) { alert('Lỗi đăng ký Agent của bạn lên Hub.'); return; }
+
+        // Send direct challenge
+        const timeControl = game_id === 'chess' ? _modalDirectTC : null;
+        const chalRes = await fetch(`${hubUrl}/api/v1/hub/challenge`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ target_id, challenger_id: challengerId, game_id, time_control: timeControl })
+        });
+        const chalData = await chalRes.json();
+        if (chalRes.ok) {
+          closeChallengeModal();
+          onlineMyPlayerId = challengerId;
+          startOnlineStream(chalData.match_id);
+        } else {
+          alert(`Thách đấu thất bại: ${chalData.detail || JSON.stringify(chalData)}`);
+        }
+      } catch(e) {
+        alert(`Lỗi kết nối: ${e.message}`);
+      } finally {
+        btn.disabled = false; btn.textContent = '⚔️ Khiêu chiến';
+      }
     }
 
     function onOnlineGameChange() {
@@ -4412,6 +4775,15 @@
 
       const { roomId, gameId, hostId, challengerId } = currentChallengeRoom;
 
+      // Set modal to "room" mode (not direct)
+      _pendingDirectChallenge = null;
+      const titleEl = document.getElementById('modal-challenge-title');
+      const roomInfoEl = document.getElementById('modal-info-room');
+      const directTCSection = document.getElementById('modal-direct-tc-section');
+      if (titleEl) titleEl.textContent = 'Thiết lập Khiêu chiến';
+      if (roomInfoEl) roomInfoEl.style.display = '';
+      if (directTCSection) directTCSection.style.display = 'none';
+
       document.getElementById('modal-challenge-room-id').innerText = roomId;
       const gameIcon = gameId === 'snake' ? '🐍 Snake Arena' : (gameId === 'tetris' ? '🧱 Tetris Battle' : '♟️ Chess (Cờ vua)');
       document.getElementById('modal-challenge-game').innerText = gameIcon;
@@ -4588,6 +4960,7 @@
     function closeChallengeModal() {
       document.getElementById('challenge-modal').classList.remove('show');
       currentChallengeRoom = null;
+      _pendingDirectChallenge = null;
     }
 
     async function confirmChallengeOnlineRoom() {
