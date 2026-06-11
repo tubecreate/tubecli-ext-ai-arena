@@ -557,6 +557,8 @@ async def play_turn(req: PlayTurnRequest):
             break
 
     api_key = ""  # Will be resolved dynamically by AIPlayer
+    if hasattr(agent, "cloud_api_keys") and isinstance(agent.cloud_api_keys, dict):
+        api_key = agent.cloud_api_keys.get(provider) or ""
 
     # ── Check if this is the Snake Game ──
     # If yes, use the Hybrid AI approach to run in realtime (< 5ms response time)

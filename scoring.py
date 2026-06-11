@@ -74,21 +74,13 @@ class ScoringSystem:
                 if "agent_id" in p:
                     self._leaderboard["players"][p["key"]]["agent_id"] = p["agent_id"]
 
-        # For 2-player: standard ELO
+        # For 2-player matches
         if len(player_keys) == 2:
             k1, k2 = player_keys[0], player_keys[1]
-            r1 = self._leaderboard["players"][k1]["elo"]
-            r2 = self._leaderboard["players"][k2]["elo"]
             s1 = scores.get(k1, 0.5)
             s2 = scores.get(k2, 0.5)
 
-            e1 = 1 / (1 + 10 ** ((r2 - r1) / 400))
-            e2 = 1 / (1 + 10 ** ((r1 - r2) / 400))
-
-            self._leaderboard["players"][k1]["elo"] = round(r1 + K_FACTOR * (s1 - e1))
-            self._leaderboard["players"][k2]["elo"] = round(r2 + K_FACTOR * (s2 - e2))
-
-            # Update W/L/D
+            # Update W/L/D and games count
             for key, score in [(k1, s1), (k2, s2)]:
                 self._leaderboard["players"][key]["games"] += 1
                 if score == 1.0:
@@ -98,16 +90,11 @@ class ScoringSystem:
                 else:
                     self._leaderboard["players"][key]["draws"] += 1
         else:
-            # Multi-player: simplified — gain/lose based on finish position
+            # Multi-player matches: update stats based on finish position
             sorted_players = sorted(player_keys, key=lambda k: scores.get(k, 0), reverse=True)
             n = len(sorted_players)
             for i, key in enumerate(sorted_players):
                 rank_score = 1.0 - (i / (n - 1)) if n > 1 else 0.5
-                current_elo = self._leaderboard["players"][key]["elo"]
-                avg_elo = sum(self._leaderboard["players"][k]["elo"] for k in player_keys) / n
-                expected = 1 / (1 + 10 ** ((avg_elo - current_elo) / 400))
-                new_elo = round(current_elo + K_FACTOR * (rank_score - expected))
-                self._leaderboard["players"][key]["elo"] = new_elo
                 self._leaderboard["players"][key]["games"] += 1
                 if rank_score >= 0.9:
                     self._leaderboard["players"][key]["wins"] += 1
@@ -140,7 +127,7 @@ class ScoringSystem:
                 "key": key,
                 **data,
             })
-        entries.sort(key=lambda x: x["elo"], reverse=True)
+        entries.sort(key=lambda x: x["games"], reverse=True)
         return entries
 
     def get_match_history(self, limit: int = 20) -> list:

@@ -1024,6 +1024,218 @@
     }
 
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Premium Mode Selector Card */
+    .mode-card {
+      background: linear-gradient(180deg, rgba(26, 34, 54, 0.6) 0%, rgba(17, 24, 39, 0.9) 100%);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 40px 32px;
+      cursor: pointer;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(12px);
+    }
+    
+    .mode-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top, rgba(99, 102, 241, 0.15) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+    
+    .mode-card.offline-card:hover::before {
+      background: radial-gradient(circle at top, rgba(129, 140, 248, 0.25) 0%, transparent 70%);
+      opacity: 1;
+    }
+    
+    .mode-card.online-card:hover::before {
+      background: radial-gradient(circle at top, rgba(56, 189, 248, 0.25) 0%, transparent 70%);
+      opacity: 1;
+    }
+    
+    .mode-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 20px;
+      padding: 1px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01));
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+
+    .mode-card.offline-card:hover {
+      transform: translateY(-8px);
+      border-color: rgba(129, 140, 248, 0.6);
+      box-shadow: 0 20px 40px rgba(129, 140, 248, 0.15);
+    }
+    
+    .mode-card.online-card:hover {
+      transform: translateY(-8px);
+      border-color: rgba(56, 189, 248, 0.6);
+      box-shadow: 0 20px 40px rgba(56, 189, 248, 0.15);
+    }
+    
+    .mode-card-badge {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 16px;
+      border: 1px solid rgba(255,255,255,0.05);
+      background: rgba(0, 0, 0, 0.3);
+    }
+    
+    .mode-card-badge.offline-badge {
+      color: #a5b4fc;
+      border-color: rgba(129, 140, 248, 0.3);
+      box-shadow: 0 0 10px rgba(129, 140, 248, 0.1);
+    }
+    
+    .mode-card-badge.online-badge {
+      color: #38bdf8;
+      border-color: rgba(56, 189, 248, 0.3);
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.1);
+    }
+
+    .mode-card-title {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      z-index: 1;
+    }
+    
+    .mode-card.offline-card .mode-card-title {
+      background: linear-gradient(135deg, #fff, #c7d2fe);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .mode-card.online-card .mode-card-title {
+      background: linear-gradient(135deg, #fff, #bae6fd);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .mode-card-icon-container {
+      position: relative;
+      width: 100px;
+      height: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      z-index: 1;
+    }
+
+    .mode-card-icon-bg {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px dashed rgba(255,255,255,0.08);
+      animation: rotate-dashed 20s linear infinite;
+    }
+
+    .mode-card:hover .mode-card-icon-bg {
+      border-color: var(--accent-light);
+      transform: scale(1.1);
+      transition: all 0.4s ease;
+    }
+
+    @keyframes rotate-dashed {
+      100% { transform: rotate(360deg); }
+    }
+
+    .mode-card-icon {
+      font-size: 48px;
+      z-index: 2;
+      transition: transform 0.4s ease;
+    }
+
+    .mode-card:hover .mode-card-icon {
+      transform: scale(1.15) rotate(5deg);
+    }
+    
+    .mode-features-list {
+      text-align: left;
+      margin: 16px 0 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+      z-index: 1;
+    }
+
+    .mode-feature-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .mode-feature-item .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent-light);
+      box-shadow: 0 0 6px var(--accent-light);
+    }
+
+    /* Wide Dialog Modal Content */
+    .wide-modal-card {
+      max-width: 820px !important;
+      width: 95%;
+      padding: 32px !important;
+      text-align: left !important;
+    }
+    
+    .modal-scroll-body {
+      max-height: 480px;
+      overflow-y: auto;
+      margin-top: 16px;
+      margin-bottom: 24px;
+      padding-right: 8px;
+    }
+    
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
+    }
+    
+    .modal-close-btn {
+      font-size: 24px;
+      color: var(--text-secondary);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      line-height: 1;
+      transition: color 0.2s;
+    }
+    
+    .modal-close-btn:hover {
+      color: var(--danger);
+    }
   </style>
 </head>
 <body>
@@ -1046,30 +1258,48 @@
 
     <!-- Welcome Page (Chế độ đấu) -->
     <div id="page-welcome" class="page active">
-      <div class="lobby-hero" style="margin-bottom: 40px;">
-        <h1 class="lobby-title" style="font-size: 38px; font-weight: 800; background: linear-gradient(135deg, #a5b4fc, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">⚔️ AI ARENA ⚔️</h1>
-        <p class="lobby-subtitle" style="font-size: 15px; color: var(--text-secondary);">Chọn chế độ thi đấu để tiếp tục</p>
+      <div class="lobby-hero" style="margin-bottom: 48px; padding-top: 20px;">
+        <h1 class="lobby-title" style="font-size: 42px; font-weight: 900; background: linear-gradient(135deg, #c7d2fe, #38bdf8, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 2px; animation: float 3s ease-in-out infinite;">⚔️ AI ARENA ⚔️</h1>
+        <p class="lobby-subtitle" style="font-size: 16px; color: var(--text-secondary); margin-top: 8px;">Hệ thống Huấn luyện và Thi đấu trí tuệ nhân tạo đối kháng</p>
       </div>
 
-      <div class="game-cards" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); max-width: 900px; margin: 0 auto; padding: 10px;">
-        <!-- Card 1: Đấu Luyện (Local Offline) -->
-        <div class="game-card" onclick="selectMode('offline')" style="border-color: rgba(129, 140, 248, 0.25); background: rgba(129, 140, 248, 0.02); padding: 40px 30px; text-align: center;">
-          <span class="game-card-icon" style="font-size: 64px; margin-bottom: 20px; display: block;">🛡️</span>
-          <div class="game-card-title" style="font-size: 22px; color: #818cf8; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Đấu Luyện</div>
-          <div class="game-card-desc" style="font-size: 13.5px; margin-top: 12px; min-height: 48px; color: var(--text-secondary); line-height: 1.6;">
+      <div class="game-cards" style="grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); max-width: 960px; margin: 0 auto; padding: 10px; gap: 28px;">
+        <!-- Card 1: Đấu Luyện (Local Practice) -->
+        <div class="mode-card offline-card" onclick="selectMode('offline')">
+          <div class="mode-card-badge offline-badge">Local Practice</div>
+          <div class="mode-card-icon-container">
+            <div class="mode-card-icon-bg"></div>
+            <span class="mode-card-icon">🛡️</span>
+          </div>
+          <div class="mode-card-title">Đấu Luyện</div>
+          <div class="game-card-desc" style="font-size: 14px; color: var(--text-secondary); line-height: 1.6; min-height: 44px;">
             Huấn luyện AI, đấu tập nội bộ và phân tích chiến thuật trực tiếp trên máy của bạn (Offline).
           </div>
-          <button class="btn-primary" style="margin-top: 24px; width: 100%; pointer-events: none; background: linear-gradient(135deg, #6366f1, #4f46e5); border: none;">BẮT ĐẦU LUYỆN TẬP</button>
+          <div class="mode-features-list">
+            <div class="mode-feature-item"><span class="dot" style="background:#818cf8; box-shadow:0 0 6px #818cf8;"></span><span>Build & test skills cho local agents</span></div>
+            <div class="mode-feature-item"><span class="dot" style="background:#818cf8; box-shadow:0 0 6px #818cf8;"></span><span>Tùy chỉnh luật cờ chuẩn FIDE quốc tế</span></div>
+            <div class="mode-feature-item"><span class="dot" style="background:#818cf8; box-shadow:0 0 6px #818cf8;"></span><span>Thống kê hiệu năng trận đấu cục bộ</span></div>
+          </div>
+          <button class="btn-primary" style="width: 100%; pointer-events: none; background: linear-gradient(135deg, #6366f1, #4f46e5); border: none; padding: 12px 24px; border-radius: 10px; font-size: 14px; font-weight:700;">BẮT ĐẦU LUYỆN TẬP</button>
         </div>
 
         <!-- Card 2: Đấu Trường (Online Tournament) -->
-        <div class="game-card" onclick="selectMode('online')" style="border-color: rgba(56, 189, 248, 0.25); background: rgba(56, 189, 248, 0.02); padding: 40px 30px; text-align: center;">
-          <span class="game-card-icon" style="font-size: 64px; margin-bottom: 20px; display: block;">⚔️</span>
-          <div class="game-card-title" style="font-size: 22px; color: #38bdf8; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;">Đấu Trường</div>
-          <div class="game-card-desc" style="font-size: 13.5px; margin-top: 12px; min-height: 48px; color: var(--text-secondary); line-height: 1.6;">
+        <div class="mode-card online-card" onclick="selectMode('online')">
+          <div class="mode-card-badge online-badge">Global Championship</div>
+          <div class="mode-card-icon-container">
+            <div class="mode-card-icon-bg"></div>
+            <span class="mode-card-icon">⚔️</span>
+          </div>
+          <div class="mode-card-title">Đấu Trường</div>
+          <div class="game-card-desc" style="font-size: 14px; color: var(--text-secondary); line-height: 1.6; min-height: 44px;">
             Thách đấu AI từ các máy khác qua Central Hub, xếp hạng ELO trực tuyến (Online).
           </div>
-          <button class="btn-primary" style="margin-top: 24px; width: 100%; pointer-events: none; background: linear-gradient(135deg, #0ea5e9, #0284c7); border: none;">VÀO ĐẤU TRƯỜNG</button>
+          <div class="mode-features-list">
+            <div class="mode-feature-item"><span class="dot" style="background:#38bdf8; box-shadow:0 0 6px #38bdf8;"></span><span>Tham gia bảng xếp hạng ELO thế giới</span></div>
+            <div class="mode-feature-item"><span class="dot" style="background:#38bdf8; box-shadow:0 0 6px #38bdf8;"></span><span>Hỗ trợ tạo phòng & ghép trận nhanh</span></div>
+            <div class="mode-feature-item"><span class="dot" style="background:#38bdf8; box-shadow:0 0 6px #38bdf8;"></span><span>Chỉ tính ELO khi đấu với máy khác</span></div>
+          </div>
+          <button class="btn-primary" style="width: 100%; pointer-events: none; background: linear-gradient(135deg, #0ea5e9, #0284c7); border: none; padding: 12px 24px; border-radius: 10px; font-size: 14px; font-weight:700;">VÀO ĐẤU TRƯỜNG</button>
         </div>
       </div>
     </div>
@@ -1138,24 +1368,30 @@
         <p class="lobby-subtitle">Kết nối Central Hub và thi đấu với các AI từ máy chủ khác</p>
       </div>
 
+      <!-- 🏠 My Active Room Banner -->
+      <div id="my-room-banner" class="setup-section" style="display: none; margin-bottom: 24px; padding: 18px 24px; position: relative; border-color: var(--accent); background: rgba(99, 102, 241, 0.1); box-shadow: 0 4px 20px rgba(99, 102, 241, 0.15); border-radius: 12px; overflow: hidden;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; position: relative; z-index: 2;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <span id="my-room-pulse" class="status-dot" style="width: 10px; height: 10px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 10px var(--cyan); flex-shrink: 0;"></span>
+            <span id="my-room-status-text" style="font-weight: 700; font-size: 14.5px; color: var(--text-primary);">⏳ Đang chờ đối thủ vào phòng...</span>
+            <span id="my-room-id-badge" style="display: none;"></span>
+          </div>
+          <div style="display: flex; gap: 12px; align-items: center;">
+            <button id="btn-my-room-watch" class="btn-primary" onclick="watchMyRoom()" style="display: none; font-size: 12px; padding: 6px 16px; background: linear-gradient(135deg, var(--success), #16a34a); box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);">👁️ Vào Trận</button>
+            <button class="btn-cancel-match" onclick="cancelMyRoom()" style="margin: 0; padding: 6px 16px; font-size: 12px; border-radius: 8px;">✕ Hủy phòng chờ</button>
+          </div>
+        </div>
+        <!-- Progress bar tracking -->
+        <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 4px; background: rgba(255,255,255,0.05);">
+          <div id="my-room-progress" style="width: 5%; height: 100%; background: linear-gradient(90deg, var(--cyan), var(--accent)); transition: width 0.3s ease;"></div>
+        </div>
+      </div>
+
       <!-- Online Hub Layout -->
       <div class="match-layout" style="grid-template-columns: 380px 1fr; min-height: auto;">
         <!-- Left Panel: Configurations & Matchmaking Controls -->
         <div style="display: flex; flex-direction: column; gap: 20px;">
-          <!-- Hub Server Settings -->
-          <div class="setup-section">
-            <div class="setup-title">⚙️ Cấu hình Central Hub</div>
-            <div class="player-slot" style="background: rgba(0,0,0,0.3); border: 1px solid var(--border); padding: 16px;">
-              <div style="display: flex; flex-direction: column; gap: 10px;">
-                <label style="font-size: 12px; color: var(--text-secondary); font-weight: 600;">HUB SERVER URL</label>
-                <input type="text" id="online-hub-url" value="https://tournament-hub.tubecli.workers.dev" placeholder="https://..." style="width: 100%;">
-                <div style="background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3); border-radius: 8px; padding: 10px; font-size: 11px; color: #86efac; line-height: 1.5;">
-                  ✅ <b>Không cần Webhook / Tunnel!</b><br>
-                  Kiến trúc mới: arena.html tự polling Hub để biết đến lượt, rồi gửi nước đi qua <code>submit-move</code>. Bạn chỉ cần kết nối internet bình thường.
-                </div>
-              </div>
-            </div>
-          </div>
+          <input type="hidden" id="online-hub-url" value="https://tournament-hub.tubecli.workers.dev">
 
           <!-- Register Agent & Queue -->
           <div class="setup-section">
@@ -1166,6 +1402,18 @@
                 <select id="online-agent" onchange="onOnlineAgentSelect()" style="width: 100%;">
                   <option value="">Đang tải agents...</option>
                 </select>
+              </div>
+
+              <!-- Guest Setup Form (Online Panel) -->
+              <div id="online-guest-setup" style="display: none; flex-direction: column; gap: 10px; border: 1px dashed rgba(99,102,241,0.4); padding: 12px; border-radius: 8px; background: rgba(99,102,241,0.05);">
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                  <label style="font-size: 11px; color: var(--text-secondary); font-weight: 600;">TÊN ĐẤU SĨ TẠM THỜI</label>
+                  <input type="text" id="online-guest-name" value="Khách vãn lai" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-primary);">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 4px;">
+                  <label style="font-size: 11px; color: var(--text-secondary); font-weight: 600;">API KEY (CLOUD)</label>
+                  <input type="password" id="online-guest-key" placeholder="Nhập API Key cho Provider cloud" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-primary);">
+                </div>
               </div>
 
               <div style="display: flex; flex-direction: column; gap: 6px;">
@@ -1222,7 +1470,7 @@
           </div>
         </div>
 
-        <!-- Right Panel: Waiting Rooms & Hub Info -->
+        <!-- Right Panel: Waiting Rooms -->
         <div style="display: flex; flex-direction: column; gap: 20px;">
           <!-- Active Waiting Rooms -->
           <div class="setup-section" style="flex: 1;">
@@ -1230,7 +1478,7 @@
               <span>🏠 Phòng Đang Đợi Đối Thủ (Challenge)</span>
               <button class="btn-sm" onclick="fetchOnlineRooms()" style="margin: 0; padding: 4px 10px; font-size: 11px;">🔄 Làm mới</button>
             </div>
-            <div style="overflow-x: auto; max-height: 300px; margin-top: 10px;">
+            <div style="overflow-x: auto; max-height: 520px; margin-top: 10px;">
               <table class="leaderboard-table" id="online-rooms-table" style="font-size: 13px;">
                 <thead>
                   <tr>
@@ -1249,44 +1497,6 @@
                   </tr>
                 </tbody>
               </table>
-            </div>
-          </div>
-
-          <!-- Leaderboard / History on Hub -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-            <div class="setup-section">
-              <div class="setup-title" style="justify-content: space-between;">
-                <span>🏆 ELO Leaderboard (Hub)</span>
-                <select id="online-leaderboard-game" onchange="loadOnlineLeaderboard()" style="padding: 4px 8px; font-size: 11px; background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border); border-radius: 6px; cursor: pointer;">
-                  <option value="chess" selected>♟️ Chess (Cờ vua)</option>
-                  <option value="snake">🐍 Snake Arena</option>
-                  <option value="tetris">🧱 Tetris Battle</option>
-                </select>
-              </div>
-              <div style="overflow-x: auto; max-height: 250px; margin-top: 10px;">
-                <table class="leaderboard-table" style="font-size: 12px;">
-                  <thead>
-                    <tr>
-                      <th>Hạng</th>
-                      <th>Agent</th>
-                      <th>ELO</th>
-                      <th>Trận</th>
-                    </tr>
-                  </thead>
-                  <tbody id="online-leaderboard-body">
-                    <tr>
-                      <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 15px;">Đang tải...</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <div class="setup-section">
-              <div class="setup-title">📜 Lịch sử đấu Hub (Hôm nay)</div>
-              <div style="overflow-y: auto; max-height: 250px; margin-top: 10px; display: flex; flex-direction: column; gap: 8px;" id="online-history-list">
-                <div style="text-align: center; color: var(--text-muted); padding: 15px; font-size: 12px;">Chưa có lịch sử đấu trên Hub.</div>
-              </div>
             </div>
           </div>
         </div>
@@ -1375,7 +1585,7 @@
                 <span id="online-turn-indicator">Turn 0</span>
               </div>
               <div class="match-status-badge status-running" id="online-status-badge">LIVE 🔴</div>
-              <button class="btn-cancel-match" onclick="closeOnlineStream()" style="border-color: var(--border); background: rgba(255,255,255,0.05); color: var(--text-secondary);">✕ Rời màn hình</button>
+              <button class="btn-cancel-match" onclick="closeOnlineStream()" style="border-color: var(--border); background: rgba(255,255,255,0.05); color: var(--text-secondary);">✕ Về phòng chờ</button>
             </div>
           </div>
 
@@ -1486,32 +1696,33 @@
       </div>
     </div>
 
-    <!-- Leaderboard Page -->
-    <div id="page-leaderboard" class="page">
-      <h2 style="font-size:28px; font-weight:800; margin-bottom:20px;">🏆 Bảng Xếp Hạng ELO</h2>
-      <div class="setup-section">
-        <table class="leaderboard-table" id="leaderboard-table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Agent</th>
-              <th>Provider</th>
-              <th>ELO</th>
-              <th>W/L/D</th>
-              <th>Games</th>
-              <th>Tokens</th>
-            </tr>
-          </thead>
-          <tbody id="leaderboard-body">
-          </tbody>
-        </table>
+    <!-- Leaderboard Modal -->
+    <div id="leaderboard-modal" class="result-overlay">
+      <div class="result-card wide-modal-card">
+        <div class="modal-header">
+          <h2 id="leaderboard-modal-title" style="margin: 0; font-size: 22px; font-weight: 800; display: flex; align-items: center; gap: 10px; color: var(--text-primary);">
+            📊 Bảng xếp hạng
+          </h2>
+          <button class="modal-close-btn" onclick="closeLeaderboardModal()">✕</button>
+        </div>
+        <div id="leaderboard-modal-body-container" class="modal-scroll-body">
+          <!-- Dynamically filled by JS -->
+        </div>
       </div>
     </div>
 
-    <!-- History Page -->
-    <div id="page-history" class="page">
-      <h2 style="font-size:28px; font-weight:800; margin-bottom:20px;">📜 Lịch sử trận đấu</h2>
-      <div id="history-list">
+    <!-- History Modal -->
+    <div id="history-modal" class="result-overlay">
+      <div class="result-card wide-modal-card">
+        <div class="modal-header">
+          <h2 id="history-modal-title" style="margin: 0; font-size: 22px; font-weight: 800; display: flex; align-items: center; gap: 10px; color: var(--text-primary);">
+            📜 Lịch sử trận đấu
+          </h2>
+          <button class="modal-close-btn" onclick="closeHistoryModal()">✕</button>
+        </div>
+        <div id="history-modal-body-container" class="modal-scroll-body">
+          <!-- Dynamically filled by JS -->
+        </div>
       </div>
     </div>
 
@@ -1519,6 +1730,20 @@
     <div id="result-overlay" class="result-overlay">
       <div class="result-card" id="result-card">
         <!-- Filled by JS -->
+      </div>
+    </div>
+
+    <!-- Alert Modal (Custom dialog replaces window.alert) -->
+    <div id="alert-modal" class="result-overlay" style="z-index: 10005;">
+      <div class="result-card" style="padding: 28px; max-width: 420px; text-align: left; border-color: rgba(99,102,241,0.35); box-shadow: 0 12px 40px rgba(0,0,0,0.7); border-radius: 16px;">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+          <span id="alert-modal-icon" style="font-size: 28px;">🔔</span>
+          <h3 id="alert-modal-title" style="margin: 0; font-size: 18px; font-weight: 800; color: var(--text-primary);">Thông báo</h3>
+        </div>
+        <div id="alert-modal-message" style="color: var(--text-secondary); font-size: 13.5px; line-height: 1.6; margin-bottom: 24px; white-space: pre-wrap;"></div>
+        <div style="text-align: right;">
+          <button class="btn-primary" onclick="closeAlertModal()" style="margin: 0; padding: 8px 24px; font-size: 13px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer;">OK</button>
+        </div>
       </div>
     </div>
 
@@ -1541,6 +1766,18 @@
             <select id="modal-challenge-agent" onchange="onModalAgentSelect()" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-primary);">
               <!-- Filled by JS -->
             </select>
+          </div>
+
+          <!-- Guest Setup Form (Modal) -->
+          <div id="modal-guest-setup" style="display: none; flex-direction: column; gap: 10px; border: 1px dashed rgba(99,102,241,0.4); padding: 12px; border-radius: 8px; background: rgba(99,102,241,0.05);">
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <label style="font-size: 11px; color: var(--text-secondary); font-weight: 600;">TÊN ĐẤU SĨ TẠM THỜI</label>
+              <input type="text" id="modal-guest-name" value="Khách vãn lai" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-primary);">
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <label style="font-size: 11px; color: var(--text-secondary); font-weight: 600;">API KEY (CLOUD)</label>
+              <input type="password" id="modal-guest-key" placeholder="Nhập API Key cho Provider cloud" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-primary);">
+            </div>
           </div>
 
           <div style="display: flex; flex-direction: column; gap: 6px;">
@@ -1631,6 +1868,32 @@
     let selectedTimeControl = 'rapid';
     let ARENA_AGENTS = [];
 
+    // ── Custom Alert Dialog override ────────────────
+    function showAlertDialog(message, title = 'Thông báo', icon = '🔔') {
+      document.getElementById('alert-modal-title').innerText = title;
+      document.getElementById('alert-modal-message').innerText = message;
+      document.getElementById('alert-modal-icon').innerText = icon;
+      document.getElementById('alert-modal').classList.add('show');
+    }
+
+    function closeAlertModal() {
+      document.getElementById('alert-modal').classList.remove('show');
+    }
+
+    window.alert = function(msg) {
+      const lower = String(msg).toLowerCase();
+      let icon = '🔔';
+      let title = 'Thông báo';
+      if (lower.includes('lỗi') || lower.includes('thất bại') || lower.includes('failed') || lower.includes('error')) {
+        icon = '❌';
+        title = 'Có Lỗi Xảy Ra';
+      } else if (lower.includes('thành công') || lower.includes('success') || lower.includes('đã gia nhập')) {
+        icon = '✅';
+        title = 'Thành Công';
+      }
+      showAlertDialog(msg, title, icon);
+    };
+
     // ── Mode Select & Navigation State ──────────────
     let currentMode = localStorage.getItem('arena_current_mode') || null;
     let selectedGameName = localStorage.getItem('arena_selected_game') || null;
@@ -1720,14 +1983,16 @@
       if (currentMode === 'offline') {
         container.innerHTML = `
           <button class="nav-btn ${activePage === 'lobby' ? 'active' : ''}" onclick="showPage('lobby')">⚙️ Cấu Hình</button>
-          <button class="nav-btn ${activePage === 'leaderboard' ? 'active' : ''}" onclick="showPage('leaderboard')">🏆 Xếp Hạng</button>
-          <button class="nav-btn ${activePage === 'history' ? 'active' : ''}" onclick="showPage('history')">📜 Lịch Sử</button>
+          <button class="nav-btn" onclick="openLeaderboardModal()">🏆 Xếp Hạng</button>
+          <button class="nav-btn" onclick="openHistoryModal()">📜 Lịch Sử</button>
           <button class="nav-btn" onclick="goToGameSelect()" style="margin-left: 12px; font-weight: 700;">🔄 Đổi Game</button>
           <button class="nav-btn" onclick="goToWelcome()" style="background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3); color: var(--danger); font-weight: 700;">⬅️ Chọn Chế Độ</button>
         `;
       } else if (currentMode === 'online') {
         container.innerHTML = `
           <button class="nav-btn ${activePage === 'online' ? 'active' : ''}" onclick="showPage('online')">⚔️ Đấu Trường Hub</button>
+          <button class="nav-btn" onclick="openLeaderboardModal()">🏆 Xếp Hạng</button>
+          <button class="nav-btn" onclick="openHistoryModal()">📜 Lịch Sử</button>
           <button class="nav-btn" onclick="goToGameSelect()" style="margin-left: 12px; font-weight: 700;">🔄 Đổi Game</button>
           <button class="nav-btn" onclick="goToWelcome()" style="background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3); color: var(--danger); font-weight: 700;">⬅️ Chọn Chế Độ</button>
         `;
@@ -1745,6 +2010,19 @@
           const [k, v] = p.split('=');
           if (k) params[k] = decodeURIComponent(v || '');
         });
+      }
+
+      if (page === 'leaderboard') {
+        const targetPage = currentMode === 'online' ? 'online' : 'lobby';
+        showPage(targetPage, true);
+        setTimeout(openLeaderboardModal, 100);
+        return;
+      }
+      if (page === 'history') {
+        const targetPage = currentMode === 'online' ? 'online' : 'lobby';
+        showPage(targetPage, true);
+        setTimeout(openHistoryModal, 100);
+        return;
       }
 
       // Default routing: redirect based on saved state
@@ -1815,6 +2093,18 @@
     }
 
     window.addEventListener('hashchange', handleHashRouting);
+
+    window.addEventListener('pagehide', () => {
+      if (typeof _myRoomId !== 'undefined' && _myRoomId) {
+        const hubUrl = resolveHubApiUrl(document.getElementById('online-hub-url')?.value?.trim() || '');
+        if (hubUrl) {
+          fetch(`${hubUrl}/api/v1/hub/rooms/${_myRoomId}/cancel`, { 
+            method: 'DELETE',
+            keepalive: true
+          }).catch(() => {});
+        }
+      }
+    });
 
     document.addEventListener('DOMContentLoaded', async () => {
       await Promise.all([loadGames(), loadProviders(), loadTimeControls(), loadArenaAgents()]);
@@ -2939,6 +3229,99 @@
       }
     }
 
+    // showPage duplicate removed (declared below)
+
+    function openLeaderboardModal() {
+      const container = document.getElementById('leaderboard-modal-body-container');
+      if (!container) return;
+
+      const titleEl = document.getElementById('leaderboard-modal-title');
+
+      if (currentMode === 'offline') {
+        if (titleEl) titleEl.innerHTML = '📊 Thống Kê Hiệu Năng Đấu Tập';
+        container.innerHTML = `
+          <table class="leaderboard-table" id="leaderboard-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Agent</th>
+                <th>Provider</th>
+                <th>W/L/D</th>
+                <th>Games</th>
+                <th>Tokens</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboard-body">
+              <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">Đang tải...</td></tr>
+            </tbody>
+          </table>
+        `;
+        loadLeaderboard();
+      } else {
+        if (titleEl) titleEl.innerHTML = '🏆 ELO Leaderboard (Hub)';
+        const activeOnlineGame = document.getElementById('online-game')?.value || 'chess';
+        container.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 10px; border: 1px solid var(--border);">
+            <span style="font-size: 13px; color: var(--text-secondary); font-weight: 600;">CHỌN TRÒ CHƠI</span>
+            <select id="online-leaderboard-game" onchange="loadOnlineLeaderboard()" style="padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-primary); cursor: pointer; font-size: 13px;">
+              <option value="chess" ${activeOnlineGame === 'chess' ? 'selected' : ''}>♟️ Chess (Cờ vua)</option>
+              <option value="snake" ${activeOnlineGame === 'snake' ? 'selected' : ''}>🐍 Snake Arena</option>
+              <option value="tetris" ${activeOnlineGame === 'tetris' ? 'selected' : ''}>🧱 Tetris Battle</option>
+            </select>
+          </div>
+          <table class="leaderboard-table">
+            <thead>
+              <tr>
+                <th style="width: 10%;">#</th>
+                <th style="width: 50%;">Agent</th>
+                <th style="width: 25%;">ELO</th>
+                <th style="width: 15%;">Số trận</th>
+              </tr>
+            </thead>
+            <tbody id="online-leaderboard-body">
+              <tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 20px;">Đang tải...</td></tr>
+            </tbody>
+          </table>
+        `;
+        loadOnlineLeaderboard();
+      }
+      document.getElementById('leaderboard-modal').classList.add('show');
+    }
+
+    function closeLeaderboardModal() {
+      document.getElementById('leaderboard-modal').classList.remove('show');
+    }
+
+    function openHistoryModal() {
+      const container = document.getElementById('history-modal-body-container');
+      if (!container) return;
+
+      const titleEl = document.getElementById('history-modal-title');
+
+      if (currentMode === 'offline') {
+        if (titleEl) titleEl.innerHTML = '📜 Lịch Sử Đấu Luyện (Local)';
+        container.innerHTML = `
+          <div id="history-list">
+            <div style="text-align: center; color: var(--text-muted); padding: 20px;">Đang tải...</div>
+          </div>
+        `;
+        loadHistory();
+      } else {
+        if (titleEl) titleEl.innerHTML = '📜 Lịch Sử Đấu Hub (Hôm nay)';
+        container.innerHTML = `
+          <div id="online-history-list" style="display: flex; flex-direction: column; gap: 12px;">
+            <div style="text-align: center; color: var(--text-muted); padding: 20px;">Đang tải...</div>
+          </div>
+        `;
+        loadOnlineHistory();
+      }
+      document.getElementById('history-modal').classList.add('show');
+    }
+
+    function closeHistoryModal() {
+      document.getElementById('history-modal').classList.remove('show');
+    }
+
     function showResult(data) {
       const overlay = document.getElementById('result-overlay');
       const card = document.getElementById('result-card');
@@ -3003,6 +3386,14 @@
         return;
       }
       
+      // Cancel active waiting room if navigating away from online screens
+      if (page !== 'online' && page !== 'online-match') {
+        if (typeof _myRoomId !== 'undefined' && _myRoomId) {
+          console.log('[Navigation] Navigating away from online page. Cancelling waiting room.');
+          cancelMyRoom();
+        }
+      }
+      
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
       const pageEl = document.getElementById(`page-${page}`);
       if (pageEl) pageEl.classList.add('active');
@@ -3039,7 +3430,6 @@
                 </div>
               </td>
               <td>${entry.provider}</td>
-              <td><span class="elo-value">${entry.elo}</span></td>
               <td class="wld-stats">
                 <span class="win">${entry.wins}W</span> /
                 <span class="loss">${entry.losses}L</span> /
@@ -3105,9 +3495,7 @@
         let html = ARENA_AGENTS.map(a => 
           `<option value="${a.id}">${a.name} (${a.model || '—'})</option>`
         ).join('');
-        if (!html) {
-          html = '<option value="">Chưa cấu hình Agent nào</option>';
-        }
+        html = `<option value="guest_temp">-- Khách vãn lai (Tạo Agent tạm thời) --</option>` + html;
         agentSelect.innerHTML = html;
       }
 
@@ -3121,10 +3509,8 @@
       renderOnlineTimeControls();
       onOnlineGameChange();
 
-      // 6. Fetch waiting rooms and load other cards
+      // 6. Fetch waiting rooms
       await fetchOnlineRooms();
-      await loadOnlineLeaderboard();
-      await loadOnlineHistory();
     }
 
     // ── Online Time Control ──────────────────────────────────────
@@ -3208,11 +3594,33 @@
         const def = (prov && prov.default_model) || '';
         wrap.innerHTML = `<input type="text" id="online-model" onchange="resetOnlineCheckStatus()" style="width: 100%;" placeholder="Tên model" value="${def}">`;
       }
+
+      // Toggle API Key field visibility if guest agent is active
+      const agentId = document.getElementById('online-agent').value;
+      if (agentId === 'guest_temp') {
+        const guestKeyWrap = document.getElementById('online-guest-key')?.parentElement;
+        if (guestKeyWrap) {
+          guestKeyWrap.style.display = (prov && prov.kind === 'cloud') ? 'flex' : 'none';
+        }
+      }
+
       resetOnlineCheckStatus();
     }
 
     function onOnlineAgentSelect() {
       const agentId = document.getElementById('online-agent').value;
+      const guestSetup = document.getElementById('online-guest-setup');
+      if (agentId === 'guest_temp') {
+        if (guestSetup) guestSetup.style.display = 'flex';
+        const provVal = document.getElementById('online-provider').value;
+        const prov = PROVIDER_MAP[provVal];
+        const guestKeyWrap = document.getElementById('online-guest-key')?.parentElement;
+        if (guestKeyWrap) {
+          guestKeyWrap.style.display = (prov && prov.kind === 'cloud') ? 'flex' : 'none';
+        }
+        return;
+      }
+      if (guestSetup) guestSetup.style.display = 'none';
       if (!agentId) return;
       const agent = ARENA_AGENTS.find(a => a.id === agentId);
       if (!agent) return;
@@ -3270,11 +3678,18 @@
       el.dataset.state = 'checking';
       el.querySelector('.status-text').textContent = `Đang kiểm tra ${model}...`;
 
+      // Pass API key if guest agent is selected
+      let apiKey = "";
+      const agentId = document.getElementById('online-agent').value;
+      if (agentId === 'guest_temp') {
+        apiKey = document.getElementById('online-guest-key').value.trim();
+      }
+
       try {
         const res = await fetch(API + '/check-model', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ provider, model }),
+          body: JSON.stringify({ provider, model, api_key: apiKey }),
         });
         const data = await res.json();
 
@@ -3648,8 +4063,41 @@
     }
 
 
+    async function createTemporaryAgent(name, provider, model, apiKey) {
+      const cloudApiKeys = {
+        gemini: "", claude: "", openai: "", deepseek: ""
+      };
+      const normalizedProv = provider.toLowerCase();
+      if (normalizedProv && cloudApiKeys.hasOwnProperty(normalizedProv)) {
+        cloudApiKeys[normalizedProv] = apiKey || "";
+      }
+
+      try {
+        const res = await fetch('/api/v1/agents', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: name,
+            description: "Agent tạm thời cho khách vãn lai",
+            system_prompt: "You are a competitive AI player.",
+            model: `${provider}/${model}`,
+            browser_ai_model: `${provider}/${model}`,
+            cloud_api_keys: cloudApiKeys
+          })
+        });
+        if (!res.ok) {
+          throw new Error("Không thể tạo agent tạm thời ở máy local.");
+        }
+        const data = await res.json();
+        return data.agent.id;
+      } catch (e) {
+        console.error("Lỗi tạo agent tạm thời:", e);
+        throw e;
+      }
+    }
+
     async function registerOnlineAgent() {
-      const agentId = document.getElementById('online-agent').value;
+      let agentId = document.getElementById('online-agent').value;
       if (!agentId) {
         alert("Vui lòng chọn một Agent cục bộ!");
         return false;
@@ -3661,6 +4109,21 @@
       if (!hubUrl) {
         alert("Vui lòng nhập Hub URL!");
         return false;
+      }
+
+      const selectedProvider = document.getElementById('online-provider').value;
+      const selectedModel = document.getElementById('online-model').value.trim();
+
+      // Create temporary agent if guest_temp selected
+      if (agentId === 'guest_temp') {
+        const guestName = document.getElementById('online-guest-name').value.trim() || "Khách vãn lai";
+        const guestKey = document.getElementById('online-guest-key').value.trim();
+        try {
+          agentId = await createTemporaryAgent(guestName, selectedProvider, selectedModel, guestKey);
+        } catch(err) {
+          alert(`Lỗi tạo Agent tạm thời: ${err.message}`);
+          return false;
+        }
       }
 
       // Check model availability first
@@ -3676,10 +4139,6 @@
       const btn = document.getElementById('btn-online-register');
       btn.disabled = true;
       btn.textContent = "Đang đăng ký...";
-
-      // Get selected provider & model from UI
-      const selectedProvider = document.getElementById('online-provider').value;
-      const selectedModel = document.getElementById('online-model').value.trim();
 
       try {
         // Update local agent configurations first with provider prefix
@@ -3706,13 +4165,23 @@
             agent_id: agentId,
             name: `${name} (${selectedModel})`,
             game_id: gameId
-            // No owner_server_url — new submit-move architecture!
           })
         });
         const data = await res.json();
         if (res.ok) {
           onlineMyPlayerId = agentId;
-          alert(`Đăng ký Agent "${name}" sử dụng model "${selectedModel}" thành công!\n✅ Không cần Webhook/Tunnel — tự động polling để lấy lượt.`);
+          // Sync UI selection to new temporary agent
+          const agentSelect = document.getElementById('online-agent');
+          if (agentSelect) {
+            let html = ARENA_AGENTS.map(a => 
+              `<option value="${a.id}">${a.name} (${a.model || '—'})</option>`
+            ).join('');
+            html = `<option value="guest_temp">-- Khách vãn lai (Tạo Agent tạm thời) --</option>` + html;
+            agentSelect.innerHTML = html;
+            agentSelect.value = agentId;
+            onOnlineAgentSelect();
+          }
+          alert(`Đăng ký Agent "${name}" sử dụng model "${selectedModel}" thành công!`);
           return true;
         } else {
           alert(`Đăng ký thất bại: ${data.detail || JSON.stringify(data)}`);
@@ -3771,7 +4240,10 @@
       // Stop polling
       if (_myRoomPollInterval) { clearInterval(_myRoomPollInterval); _myRoomPollInterval = null; }
       try {
-        await fetch(`${hubUrl}/api/v1/hub/rooms/${_myRoomId}/cancel`, { method: 'DELETE' });
+        await fetch(`${hubUrl}/api/v1/hub/rooms/${_myRoomId}/cancel`, { 
+          method: 'DELETE',
+          keepalive: true
+        });
       } catch(e) {}
       _myRoomId = null;
       _myRoomMatchId = null;
@@ -3786,7 +4258,16 @@
       const hubUrl = resolveHubApiUrl(document.getElementById('online-hub-url')?.value?.trim() || '');
       try {
         const res = await fetch(`${hubUrl}/api/v1/hub/rooms/${_myRoomId}`);
-        if (!res.ok) return;
+        if (!res.ok) {
+          if (res.status === 404) {
+            console.warn('[Online] Room no longer exists. Stopping polling.');
+            if (_myRoomPollInterval) { clearInterval(_myRoomPollInterval); _myRoomPollInterval = null; }
+            _myRoomId = null;
+            const banner = document.getElementById('my-room-banner');
+            if (banner) banner.style.display = 'none';
+          }
+          return;
+        }
         const room = await res.json();
 
         const elapsed = _myRoomCreatedAt ? Math.round((Date.now() - _myRoomCreatedAt) / 1000) : 0;
@@ -3838,7 +4319,8 @@
 
 
     async function createOnlineRoom() {
-      const agentId = document.getElementById('online-agent').value;
+      const agentSelect = document.getElementById('online-agent');
+      const agentId = agentSelect ? agentSelect.value : '';
       if (!agentId) {
         alert("Vui lòng chọn Agent cục bộ để làm Host!");
         return;
@@ -3858,13 +4340,15 @@
           return;
         }
 
+        // Get the updated agent ID in case a guest agent was dynamically created
+        const currentAgentId = document.getElementById('online-agent').value;
         const timeControl = gameId === 'chess' ? selectedOnlineTC : null;
         const res = await fetch(`${hubUrl}/api/v1/hub/rooms/create`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             game_id: gameId,
-            player_1_id: agentId,
+            player_1_id: currentAgentId,
             time_control: timeControl
           })
         });
@@ -3982,11 +4466,33 @@
         const def = (prov && prov.default_model) || '';
         wrap.innerHTML = `<input type="text" id="modal-challenge-model" onchange="resetModalCheckStatus()" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-primary);" placeholder="Tên model" value="${def}">`;
       }
+
+      // Toggle API Key field visibility if guest agent is active
+      const agentId = document.getElementById('modal-challenge-agent').value;
+      if (agentId === 'guest_temp') {
+        const guestKeyWrap = document.getElementById('modal-guest-key')?.parentElement;
+        if (guestKeyWrap) {
+          guestKeyWrap.style.display = (prov && prov.kind === 'cloud') ? 'flex' : 'none';
+        }
+      }
+
       resetModalCheckStatus();
     }
 
     function onModalAgentSelect() {
       const agentId = document.getElementById('modal-challenge-agent').value;
+      const guestSetup = document.getElementById('modal-guest-setup');
+      if (agentId === 'guest_temp') {
+        if (guestSetup) guestSetup.style.display = 'flex';
+        const provVal = document.getElementById('modal-challenge-provider').value;
+        const prov = PROVIDER_MAP[provVal];
+        const guestKeyWrap = document.getElementById('modal-guest-key')?.parentElement;
+        if (guestKeyWrap) {
+          guestKeyWrap.style.display = (prov && prov.kind === 'cloud') ? 'flex' : 'none';
+        }
+        return;
+      }
+      if (guestSetup) guestSetup.style.display = 'none';
       if (!agentId) return;
       const agent = ARENA_AGENTS.find(a => a.id === agentId);
       if (!agent) return;
@@ -4044,11 +4550,18 @@
       el.dataset.state = 'checking';
       el.querySelector('.status-text').textContent = `Đang kiểm tra ${model}...`;
 
+      // Pass API key if guest agent is selected
+      let apiKey = "";
+      const agentId = document.getElementById('modal-challenge-agent').value;
+      if (agentId === 'guest_temp') {
+        apiKey = document.getElementById('modal-guest-key').value.trim();
+      }
+
       try {
         const res = await fetch(API + '/check-model', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ provider, model }),
+          body: JSON.stringify({ provider, model, api_key: apiKey }),
         });
         const data = await res.json();
 
@@ -4081,13 +4594,28 @@
       if (!currentChallengeRoom) return;
 
       const { roomId, gameId, hostId } = currentChallengeRoom;
-      const challengerId = document.getElementById('modal-challenge-agent').value;
+      let challengerId = document.getElementById('modal-challenge-agent').value;
       if (!challengerId) {
         alert("Vui lòng chọn một Agent khiêu chiến!");
         return;
       }
 
       const hubUrl = resolveHubApiUrl(document.getElementById('online-hub-url').value.trim());
+
+      const selectedProvider = document.getElementById('modal-challenge-provider').value;
+      const selectedModel = document.getElementById('modal-challenge-model').value.trim();
+
+      // Create temporary agent if guest_temp selected
+      if (challengerId === 'guest_temp') {
+        const guestName = document.getElementById('modal-guest-name').value.trim() || "Khách vãn lai";
+        const guestKey = document.getElementById('modal-guest-key').value.trim();
+        try {
+          challengerId = await createTemporaryAgent(guestName, selectedProvider, selectedModel, guestKey);
+        } catch(err) {
+          alert(`Lỗi tạo Agent tạm thời: ${err.message}`);
+          return;
+        }
+      }
 
       // Check model availability first
       const statusEl = document.getElementById('modal-challenge-status');
@@ -4102,9 +4630,6 @@
       const btn = document.getElementById('btn-modal-confirm-challenge');
       btn.disabled = true;
       btn.textContent = "Đang kết nối...";
-
-      const selectedProvider = document.getElementById('modal-challenge-provider').value;
-      const selectedModel = document.getElementById('modal-challenge-model').value.trim();
 
       try {
         // Update local agent configurations first with provider prefix
@@ -4132,7 +4657,6 @@
             agent_id: challengerId,
             name: `${name} (${selectedModel})`,
             game_id: gameId
-            // No owner_server_url — submit-move architecture!
           })
         });
         if (!regRes.ok) {
@@ -4382,7 +4906,7 @@
       let gameId = document.getElementById('online-game')?.value || 'chess';
 
       // Connect SSE directly to Cloudflare Worker Hub (no local proxy needed)
-      onlineEventSource = new EventSource(`${hubUrl}/api/v1/hub/matches/${matchId}/stream`);
+      onlineEventSource = new EventSource(`${hubUrl}/api/v1/hub/matches/${matchId}/stream?t=${Date.now()}`);
 
       // Fetch match details to get authoritative game_id and sync UI
       fetch(`${hubUrl}/api/v1/hub/matches/${matchId}`)
@@ -4819,10 +5343,18 @@
         }
         document.getElementById('online-p1-name').innerText = data.player_1;
         document.getElementById('online-p2-name').innerText = data.player_2;
+        document.getElementById('online-p1-name').dataset.pid = data.player_1_id;
+        document.getElementById('online-p2-name').dataset.pid = data.player_2_id;
 
         // Reset and trigger clock
         if (gameId === 'chess') {
-          _oclkReset(data.time_control || 'rapid');
+          _oclkReset(
+            data.time_control || 'rapid',
+            data.history || [],
+            data.waiting_for_player || null,
+            data.current_turn_started_at || null,
+            data.server_time || null
+          );
         } else {
           _oclkReset('unlimited');
         }
@@ -4887,7 +5419,8 @@
         turnInd.innerText = `Turn ${data.turn}`;
 
         // Stop clock for player who just moved + add increment
-        const movedIsP1 = data.player === 'player_1' || data.message?.includes('player_1');
+        const p1Name = document.getElementById('online-p1-name')?.innerText || '';
+        const movedIsP1 = data.player === p1Name || data.message?.includes(p1Name);
         _oclkMovePlayed(movedIsP1 ? 'p1' : 'p2');
 
         const isP1 = data.message.includes('player_1') || data.message.includes('Green') || data.player === document.getElementById('online-p1-name').innerText;
@@ -4917,7 +5450,8 @@
       } else if (data.event === 'waiting') {
         // Start clock for waiting player
         // player_1 = White = p1, player_2 = Black = p2
-        const waitP1 = data.player === 'player_1' || data.player_id === document.getElementById('online-p1-name')?.dataset?.pid;
+        const p1Name = document.getElementById('online-p1-name')?.innerText || '';
+        const waitP1 = data.player === 'player_1' || data.player === p1Name || data.player_id === document.getElementById('online-p1-name')?.dataset?.pid;
         _oclkStart(waitP1 ? 'p1' : 'p2');
 
         // Show which player is being waited on
@@ -5074,7 +5608,7 @@
       _oclkRender();
     }
 
-    function _oclkReset(tcId) {
+    function _oclkReset(tcId, history = [], waitingForPlayer = null, currentTurnStartedAt = null, serverTime = null) {
       const tc = _ONLINE_TC_MAP[tcId] || _ONLINE_TC_MAP.rapid;
       _oclkStop();
       const bar = document.getElementById('online-clock-bar');
@@ -5088,6 +5622,39 @@
       _oclk.p2 = tc.base;
       _oclk.inc = tc.inc;
       _oclk.isChess = true;
+
+      const p1Name = document.getElementById('online-p1-name')?.innerText || '';
+      const p2Name = document.getElementById('online-p2-name')?.innerText || '';
+
+      // Reconstruct clock times from history
+      if (history && history.length > 0) {
+        history.forEach(item => {
+          const thinkSec = item.thinking_time_ms ? (item.thinking_time_ms / 1000) : 0;
+          const isP1 = item.player === p1Name || item.message?.includes('player_1');
+          if (isP1) {
+            _oclk.p1 = Math.max(0, _oclk.p1 - thinkSec + tc.inc);
+          } else {
+            _oclk.p2 = Math.max(0, _oclk.p2 - thinkSec + tc.inc);
+          }
+        });
+      }
+
+      // If currently waiting for a player, deduct elapsed time since currentTurnStartedAt
+      if (waitingForPlayer && currentTurnStartedAt) {
+        const clientServerDiff = serverTime ? (Date.now() - serverTime) : 0;
+        const elapsedSec = Math.max(0, (Date.now() - clientServerDiff - currentTurnStartedAt) / 1000);
+        
+        const p1Id = document.getElementById('online-p1-name')?.dataset?.pid;
+        const p2Id = document.getElementById('online-p2-name')?.dataset?.pid;
+        
+        if (waitingForPlayer === p1Id) {
+          _oclk.p1 = Math.max(0, _oclk.p1 - elapsedSec);
+          _oclkStart('p1');
+        } else if (waitingForPlayer === p2Id) {
+          _oclk.p2 = Math.max(0, _oclk.p2 - elapsedSec);
+          _oclkStart('p2');
+        }
+      }
 
       const lbl = document.getElementById('oclock-tc-label');
       const dtl = document.getElementById('oclock-tc-detail');
