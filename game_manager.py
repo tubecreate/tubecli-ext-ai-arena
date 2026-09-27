@@ -40,6 +40,12 @@ def _load_games():
     except Exception as e:
         logger.warning(f"Failed to load Snake Arena: {e}")
 
+    try:
+        from engine.xiangqi_game import XiangqiGame
+        register_game(XiangqiGame)
+    except Exception as e:
+        logger.warning(f"Failed to load Xiangqi: {e}")
+
 
 _load_games()
 
