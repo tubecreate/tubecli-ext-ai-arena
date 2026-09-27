@@ -217,10 +217,32 @@ class AIPlayer:
                     base_url="https://openrouter.ai/api/v1/chat/completions",
                     default_model=self.model or "openai/gpt-4o-mini")
             elif self.provider == "9router":
-                # 9Router is a local OpenAI-compatible proxy (no real key needed).
-                return self._call_openai_compat(prompt, api_key or "9router",
-                    base_url="http://localhost:20128/v1/chat/completions",
-                    default_model=self.model or "deepseek-chat")
+                # 9Router có thể ở MÁY KHÁC: endpoint + key nằm trong Cloud API Keys,
+                # hỏi qua core/ninerouter — đừng viết cứng localhost:20128 (bài học
+                # 13/9/2026: hơn 30 chỗ viết cứng làm agent «đi bừa» vì gọi vào cổng
+                # không có gì chạy). Tunnel của 9Router remote còn CHẶN User-Agent mặc
+                # định, nên phải dùng auth_headers() của lõi chứ không tự dựng header.
+                try:
+                    from tubecli.core import ninerouter as _nr
+                    url = _nr.chat_url()
+                    headers = _nr.auth_headers(api_key or None)
+                except Exception:
+                    url = "http://localhost:20128/v1/chat/completions"
+                    headers = {"Authorization": f"Bearer {api_key or '9router'}"}
+                headers["Content-Type"] = "application/json"
+                r = requests.post(url, headers=headers, json={
+                    "model": self.model or "deepseek-chat",
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": 0.5, "max_tokens": 512, "stream": False,
+                }, timeout=120)
+                if r.status_code == 429:
+                    return "[QUOTA_ERROR] 9router: Rate limit exceeded"
+                if r.status_code != 200:
+                    return f"[ERROR] 9router {r.status_code}: {r.text[:200]}"
+                choices = (r.json() or {}).get("choices", [])
+                if choices:
+                    return choices[0].get("message", {}).get("content", "")
+                return "[ERROR] 9router: No choices in response"
             elif self.provider == "github":
                 return self._call_openai_compat(prompt, api_key,
                     base_url="https://models.inference.ai.azure.com/chat/completions",
