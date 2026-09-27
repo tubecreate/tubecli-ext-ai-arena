@@ -322,3 +322,110 @@ class XiangqiGame(BaseGame):
             "captured": state.get("captured", {}),
             "move_count": state.get("move_count", 0),
         }
+# ── Lượng giá + tìm kiếm alpha-beta ─────────────────────────────────────────
+# User 27/9/2026: «agent đánh dở vậy» → sức cờ phải đến từ TÌM KIẾM, model chỉ còn vai
+# bình luận. Negamax + cắt tỉa alpha-beta, sắp nước ăn trước (MVV-LVA), đào sâu dần theo
+# ngân sách giờ. Nút trong không lọc «hợp lệ» từng nước (đắt) — thay bằng mẹo chuẩn của
+# engine: cho phép ĂN TƯỚNG với điểm thắng tuyệt đối, thế nào để tướng bị ăn/đối mặt tự
+# thua ở lớp sau; danh sách nước ở GỐC vẫn là legal_moves chuẩn nên không bao giờ trả
+# nước phạm luật.
+import time as _time
+
+MATE = 100000
+_PVAL = {"k": 10000, "r": 900, "c": 450, "n": 430, "b": 110, "a": 110, "p": 100}
+
+
+def _pst(color: str, t: str, x: int, y: int) -> int:
+    """Điểm vị trí, nhìn từ phía quân `color` (y đã là toạ độ tuyệt đối)."""
+    fwd = y if color == "w" else 9 - y            # đi càng sâu càng lớn
+    s = 0
+    if t == "p":
+        if _crossed_river(y, color):
+            s += 70 + 12 * (fwd - 5)              # tốt qua sông lớn dần theo độ sâu
+            if 2 <= x <= 6:
+                s += 10
+        else:
+            s += 4 * max(0, fwd - 3)
+    elif t == "n":
+        s += 6 * (4 - max(abs(x - 4), 0)) // 2 + (8 if 2 <= fwd <= 7 else 0)
+    elif t == "c":
+        s += 8 if x == 4 else 0                   # pháo đầu
+        s += 4 if fwd >= 5 else 0
+    elif t == "r":
+        s += 6 if _crossed_river(y, color) else 0
+    return s
+
+
+def evaluate(board: Board, color: str) -> int:
+    """Điểm thế cờ nhìn từ `color` (dương = lợi cho color)."""
+    s = 0
+    for (x, y), (c, t) in board.items():
+        v = _PVAL[t] + _pst(c, t, x, y)
+        s += v if c == color else -v
+    return s
+
+
+def _ordered(board: Board, moves):
+    """Nước ăn quân to xếp trước — alpha-beta cắt được nhiều nhất khi nước tốt đi đầu."""
+    def key(mv):
+        cap = board.get(mv[1])
+        return -(_PVAL[cap[1]] if cap else 0)
+    return sorted(moves, key=key)
+
+
+class _TimeUp(Exception):
+    pass
+
+
+def _negamax(board: Board, turn: str, depth: int, alpha: int, beta: int, deadline: float) -> int:
+    if _time.monotonic() > deadline:
+        raise _TimeUp()
+    if depth <= 0:
+        return evaluate(board, turn)
+    moves = _ordered(board, gen_pseudo(board, turn))
+    if not moves:
+        return -MATE + 1
+    best = -MATE - 1
+    for frm, to in moves:
+        cap = board.get(to)
+        if cap and cap[1] == "k":
+            return MATE - 1                        # ăn được tướng = thế trước phạm luật/thua
+        sc = -_negamax(apply_raw(board, frm, to), "b" if turn == "w" else "w",
+                       depth - 1, -beta, -alpha, deadline)
+        if sc > best:
+            best = sc
+        if best > alpha:
+            alpha = best
+        if alpha >= beta:
+            break
+    return best
+
+
+def best_moves(fen: str, top_n: int = 5, budget_s: float = 2.5):
+    """[(nước, điểm)] tốt nhất ở GỐC — luôn là nước hợp lệ chuẩn. Đào sâu dần tới khi
+    hết giờ; trả kết quả của lớp sâu nhất đã hoàn tất (lớp 1 luôn xong)."""
+    board, turn = parse_fen(fen)
+    roots = legal_moves(board, turn)
+    if not roots:
+        return []
+    deadline = _time.monotonic() + max(0.3, float(budget_s))
+    scored = [(m, 0) for m in roots]
+    other = "b" if turn == "w" else "w"
+    for depth in range(1, 7):
+        cur = []
+        alpha = -MATE - 1
+        try:
+            # Lấy lại thứ tự tốt của lớp trước: nước đầu bảng dò trước, cắt tỉa sâu hơn.
+            for m, _ in scored:
+                frm = (FILES.index(m[0]), int(m[1]))
+                to = (FILES.index(m[2]), int(m[3]))
+                sc = -_negamax(apply_raw(board, frm, to), other, depth - 1,
+                               -MATE - 1, -alpha, deadline)
+                cur.append((m, sc))
+                if sc > alpha:
+                    alpha = sc
+        except _TimeUp:
+            break
+        cur.sort(key=lambda t: -t[1])
+        scored = cur
+    return scored[:max(1, int(top_n))]

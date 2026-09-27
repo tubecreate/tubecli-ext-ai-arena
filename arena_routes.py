@@ -519,6 +519,33 @@ async def get_history(limit: int = 20):
     return {"matches": _gm().get_match_history(limit)}
 
 
+class XqBestRequest(BaseModel):
+    fen: str
+    top: int = 5
+    ms: int = 2500
+
+
+@router.post("/xiangqi/best")
+@compat_router.post("/xiangqi/best")
+async def xiangqi_best(req: XqBestRequest):
+    """Top nước cờ tướng theo engine alpha-beta (engine/xiangqi_game.best_moves).
+
+    Skill Town của lõi gọi loopback vào đây cho mức Vừa (top-5 đưa model chọn) và
+    Khó (top-1 đánh thẳng). Ngân sách giờ bị kẹp để một lượt invoke không bao giờ
+    tràn trần 40 giây của lõi."""
+    try:
+        from engine.xiangqi_game import best_moves
+    except Exception as e:
+        raise HTTPException(503, f"Xiangqi engine unavailable: {e}")
+    ms = max(300, min(int(req.ms or 2500), 6000))
+    top = max(1, min(int(req.top or 5), 10))
+    try:
+        res = await asyncio.to_thread(best_moves, req.fen, top, ms / 1000.0)
+    except Exception as e:
+        raise HTTPException(400, f"bad position: {e}")
+    return {"moves": [{"move": m, "score": s} for m, s in res]}
+
+
 class PlayTurnRequest(BaseModel):
     agent_id: str
     game_id: str
